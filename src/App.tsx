@@ -97,7 +97,7 @@ export default function App() {
       <div className="min-h-screen bg-[#080809] text-[#F5F5F7] font-sans selection:bg-[#0088CC]/30 overflow-x-hidden">
         {/* Compact & Professional Fixed Header */}
         <header className="fixed top-0 left-0 right-0 w-full z-40 bg-[#121214]/90 backdrop-blur-xl border-b border-[#2C2C2E]/60 pt-safe transition-all">
-          <div className="flex items-center justify-between px-4 h-14 max-w-lg mx-auto">
+          <div className="flex items-center justify-between px-4 h-14 max-w-5xl mx-auto">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#0088CC] to-[#00AEEF] flex items-center justify-center shadow-md shadow-blue-500/15 shrink-0">
                 <img src="https://i.suar.me/zXrj0/l" alt="GRAM" className="w-5 h-5 object-cover rounded-full" />
@@ -114,7 +114,7 @@ export default function App() {
         </header>
 
         {/* Main Content */}
-        <main className="px-6 pt-20 pb-28">
+        <main className="px-4 sm:px-6 md:px-8 pt-20 pb-28 max-w-5xl mx-auto">
           {loading && activeTab === 'gifts' ? (
             <div className="flex justify-center items-center h-40">
               <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
@@ -122,7 +122,7 @@ export default function App() {
           ) : (
             <>
               {activeTab === 'gifts' && (
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-5">
                   {gifts.map((gift) => (
                     <GiftCard key={gift.id} gift={gift} onClick={handleGiftClick} />
                   ))}
