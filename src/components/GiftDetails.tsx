@@ -11,6 +11,11 @@ const BACKGROUNDS = [
   'https://i.suar.me/Lpozo/l', // Black
   'https://i.suar.me/8zo1y/l', // Green
   'https://i.suar.me/jv05v/l', // Brown
+  'https://i.suar.me/g46m5/l', // Orange
+  'https://i.suar.me/9zJo7/l', // Purple
+  'https://i.suar.me/V9BKK/l', // Gold
+  'https://i.suar.me/YQBX9/l', // Cyan
+  'https://i.suar.me/MpVKv/l', // Red
 ];
 
 interface GiftDetailsProps {
