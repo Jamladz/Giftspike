@@ -53,7 +53,7 @@ export function BottomSheet({ isOpen, onClose, children }: BottomSheetProps) {
               <div className="w-8 h-1 bg-white/40 rounded-full" />
             </div>
 
-            <div className="flex-1 overflow-y-auto overflow-x-hidden relative scrollbar-hide">
+            <div className="flex-1 overflow-hidden relative">
               {children}
             </div>
           </motion.div>

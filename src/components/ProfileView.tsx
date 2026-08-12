@@ -6,11 +6,13 @@ import WebApp from '@twa-dev/sdk';
 interface ProfileViewProps {
   myGifts: any[];
   userId: string;
+  userStars?: number;
   onExploreGifts: () => void;
   onSelectGift?: (gift: any) => void;
 }
 
-export function ProfileView({ myGifts, userId, onExploreGifts, onSelectGift }: ProfileViewProps) {
+export function ProfileView({ myGifts, userId, userStars = 150, onExploreGifts, onSelectGift }: ProfileViewProps) {
+
   const userName = WebApp.initDataUnsafe?.user?.first_name || 'Telegram User';
   const userHandle = WebApp.initDataUnsafe?.user?.username;
 
@@ -42,22 +44,29 @@ export function ProfileView({ myGifts, userId, onExploreGifts, onSelectGift }: P
         </p>
 
         {/* Stats Row */}
-        <div className="w-full grid grid-cols-2 gap-3 mt-5 pt-4 border-t border-[#2C2C2E]">
-          <div className="bg-[#161618] p-3 rounded-2xl border border-[#2C2C2E]/80 flex flex-col items-center">
-            <p className="text-[9px] uppercase font-bold text-[#8E8E93] mb-1">Owned Gifts</p>
-            <DynamicNumber value={myGifts.length} imageClassName="h-4" />
+        <div className="w-full grid grid-cols-3 gap-2 sm:gap-3 mt-5 pt-4 border-t border-[#2C2C2E]">
+          <div className="bg-[#161618] p-2.5 sm:p-3 rounded-2xl border border-[#2C2C2E]/80 flex flex-col items-center justify-center">
+            <p className="text-[9px] uppercase font-bold text-[#8E8E93] mb-1">Gifts</p>
+            <DynamicNumber value={myGifts.length} imageClassName="h-3.5 sm:h-4" />
           </div>
-          <div className="bg-[#161618] p-3 rounded-2xl border border-[#2C2C2E]/80">
-            <p className="text-[9px] uppercase font-bold text-[#8E8E93]">Portfolio Value</p>
-            <div className="flex items-center justify-center gap-1 mt-0.5 font-bold text-sm text-amber-400">
-              <DynamicNumber value={totalValueGram} imageClassName="h-3.5" />
-              <img src="https://i.suar.me/zXrj0/l" alt="GRAM" className="w-3.5 h-3.5 rounded-full object-cover shrink-0" />
+          <div className="bg-[#161618] p-2.5 sm:p-3 rounded-2xl border border-[#2C2C2E]/80 flex flex-col items-center justify-center">
+            <p className="text-[9px] uppercase font-bold text-[#8E8E93] mb-1">Value</p>
+            <div className="flex items-center justify-center gap-1 font-bold text-xs sm:text-sm text-blue-400">
+              <DynamicNumber value={totalValueGram} imageClassName="h-3 sm:h-3.5" />
+              <img src="https://i.suar.me/zXrj0/l" alt="GRAM" className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full object-cover shrink-0" />
+            </div>
+          </div>
+          <div className="bg-[#161618] p-2.5 sm:p-3 rounded-2xl border border-[#2C2C2E]/80 flex flex-col items-center justify-center">
+            <p className="text-[9px] uppercase font-bold text-[#8E8E93] mb-1">App Stars</p>
+            <div className="flex items-center justify-center gap-1 font-bold text-xs sm:text-sm text-amber-400">
+              <DynamicNumber value={userStars} imageClassName="h-3 sm:h-3.5" />
+              <img src="https://i.suar.me/pM1Qy/l" alt="Stars" className="w-3 h-3 sm:w-3.5 sm:h-3.5 object-contain shrink-0" />
             </div>
           </div>
         </div>
       </div>
 
-      {/* My Gifts Section (قسم هداياي) */}
+      {/* My Gifts Section */}
       <div className="space-y-3">
         <div className="flex items-center justify-between px-1">
           <div className="flex items-center gap-2">

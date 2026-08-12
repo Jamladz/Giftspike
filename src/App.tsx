@@ -20,10 +20,23 @@ export default function App() {
   const [myGifts, setMyGifts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
+  const [userStars, setUserStars] = useState<number>(() => {
+    const saved = localStorage.getItem('user_stars');
+    return saved ? parseInt(saved, 10) : 150;
+  });
+
   const [selectedGift, setSelectedGift] = useState<Gift | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [successOrderId, setSuccessOrderId] = useState<string | null>(null);
   const [successBackground, setSuccessBackground] = useState<string | null>(null);
+
+  const handleEarnStars = (amount: number) => {
+    setUserStars((prev) => {
+      const next = prev + amount;
+      localStorage.setItem('user_stars', next.toString());
+      return next;
+    });
+  };
 
   // Use test user ID if not in Telegram environment
   const userId = WebApp.initDataUnsafe?.user?.id?.toString() || 'test-user-123';
@@ -69,12 +82,17 @@ export default function App() {
     }
   }, [activeTab]);
 
+  const [purchasedMarketGiftIds, setPurchasedMarketGiftIds] = useState<string[]>([]);
+
   const handleGiftClick = (gift: Gift) => {
     setSelectedGift(gift);
     setIsSheetOpen(true);
   };
 
   const handlePurchaseSuccess = (orderId: string, background?: string) => {
+    if (selectedGift && selectedGift.isMrktListing) {
+      setPurchasedMarketGiftIds(prev => [...prev, selectedGift.id]);
+    }
     setSuccessOrderId(orderId);
     setSuccessBackground(background || null);
     fetchGifts(); // Refresh supply
@@ -98,17 +116,26 @@ export default function App() {
         {/* Compact & Professional Fixed Header */}
         <header className="fixed top-0 left-0 right-0 w-full z-40 bg-[#121214]/90 backdrop-blur-xl border-b border-[#2C2C2E]/60 pt-safe transition-all">
           <div className="flex items-center justify-between px-4 h-14 max-w-5xl mx-auto">
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#0088CC] to-[#00AEEF] flex items-center justify-center shadow-md shadow-blue-500/15 shrink-0">
                 <img src="https://i.suar.me/zXrj0/l" alt="GRAM" className="w-5 h-5 object-cover rounded-full" />
               </div>
               <h1 className="text-sm font-black text-[#F5F5F7] tracking-tight">GRAM Gifts</h1>
             </div>
 
-            {/* Compact Balance Badge */}
-            <div className="bg-[#1C1C1E] border border-[#2C2C2E] hover:border-[#3A3A3C] rounded-full px-3 py-1 flex items-center gap-1.5 shadow-sm transition-colors">
-              <img src="https://i.suar.me/zXrj0/l" alt="GRAM" className="w-3.5 h-3.5 rounded-full object-cover shrink-0" />
-              <DynamicNumber value="1,240.50" imageClassName="h-3" />
+            {/* Balances Badges */}
+            <div className="flex items-center gap-2">
+              {/* Stars Balance Badge */}
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-full px-2.5 py-1 flex items-center gap-1.5 shadow-sm transition-colors">
+                <img src="https://i.suar.me/pM1Qy/l" alt="Stars" className="w-3.5 h-3.5 object-contain shrink-0" />
+                <DynamicNumber value={userStars} imageClassName="h-3 text-amber-400 font-bold" />
+              </div>
+
+              {/* GRAM Balance Badge */}
+              <div className="bg-[#1C1C1E] border border-[#2C2C2E] hover:border-[#3A3A3C] rounded-full px-2.5 py-1 flex items-center gap-1.5 shadow-sm transition-colors">
+                <img src="https://i.suar.me/zXrj0/l" alt="GRAM" className="w-3.5 h-3.5 rounded-full object-cover shrink-0" />
+                <DynamicNumber value="1,240.50" imageClassName="h-3" />
+              </div>
             </div>
           </div>
         </header>
@@ -122,21 +149,29 @@ export default function App() {
           ) : (
             <>
               {activeTab === 'gifts' && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-5">
-                  {gifts.map((gift) => (
-                    <GiftCard key={gift.id} gift={gift} onClick={handleGiftClick} />
-                  ))}
+                <div className="space-y-3">
+                  <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-4 md:gap-5">
+                    {gifts.map((gift) => (
+                      <GiftCard key={gift.id} gift={gift} onClick={handleGiftClick} />
+                    ))}
+                  </div>
                 </div>
               )}
 
-              {activeTab === 'tasks' && <TasksView />}
+              {activeTab === 'tasks' && <TasksView userStars={userStars} onEarnStars={handleEarnStars} />}
 
-              {activeTab === 'mrkt' && <MarketView onSelectGift={handleGiftClick} />}
+              {activeTab === 'mrkt' && (
+                <MarketView 
+                  onSelectGift={handleGiftClick} 
+                  purchasedGiftIds={purchasedMarketGiftIds} 
+                />
+              )}
 
               {activeTab === 'profile' && (
                 <ProfileView 
                   myGifts={myGifts} 
                   userId={userId} 
+                  userStars={userStars}
                   onExploreGifts={() => setActiveTab('gifts')} 
                   onSelectGift={handleGiftClick}
                 />
