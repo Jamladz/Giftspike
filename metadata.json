@@ -1,0 +1,6 @@
+{
+  "name": "Digital Gifts",
+  "description": "A premium Telegram Mini App for purchasing digital gifts and collectibles using TON/GRAM cryptocurrency.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
