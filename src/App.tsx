@@ -12,6 +12,7 @@ import { MarketView } from './components/MarketView';
 import { ProfileView } from './components/ProfileView';
 import { Gift } from './types';
 import { Loader2 } from 'lucide-react';
+import { api } from './lib/api';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('gifts');
@@ -42,8 +43,7 @@ export default function App() {
   const fetchGifts = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/gifts');
-      const data = await res.json();
+      const data = await api.getGifts();
       setGifts(data);
     } catch (error) {
       console.error('Failed to fetch gifts', error);
@@ -54,8 +54,7 @@ export default function App() {
 
   const fetchMyGifts = async () => {
     try {
-      const res = await fetch(`/api/my-gifts?userId=${userId}`);
-      const data = await res.json();
+      const data = await api.getMyGifts(userId);
       setMyGifts(data);
     } catch (error) {
       console.error('Failed to fetch my gifts', error);

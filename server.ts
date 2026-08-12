@@ -12,7 +12,7 @@ app.use(cors());
 
 // In-memory data store
 let gifts = [
-  { id: 'gift-1', name: 'Premium Telegram Star', image: 'https://i.suar.me/ogamY/l', priceGram: 25, totalSupply: 1000, remainingSupply: 742, status: 'AVAILABLE', createdAt: new Date().toISOString() }
+  { id: 'gift-1', name: 'Tele GT', image: 'https://i.suar.me/ogamY/l', priceGram: 25, totalSupply: 1000, remainingSupply: 742, status: 'AVAILABLE', createdAt: new Date().toISOString() }
 ];
 
 let orders: any[] = [];

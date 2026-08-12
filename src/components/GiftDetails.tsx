@@ -5,6 +5,7 @@ import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../lib/utils';
 import { CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { api } from '../lib/api';
 
 const BACKGROUNDS = [
   'https://i.suar.me/2zOW9/l', // Burgundy
@@ -29,6 +30,15 @@ export function GiftDetails({ gift, onSuccess, userId }: GiftDetailsProps) {
   const wallet = useTonWallet();
   const [paymentState, setPaymentState] = useState<PaymentState>('INITIAL');
   const [currentBgIndex, setCurrentBgIndex] = useState(0);
+  const [currentModelIndex, setCurrentModelIndex] = useState(0);
+
+  const models = [
+    gift.image,
+    'https://i.suar.me/Gn3GN/l',
+    'https://i.suar.me/ApeYO/l',
+    'https://i.suar.me/0poq0/l',
+    'https://i.suar.me/ZzXKJ/l'
+  ];
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -36,6 +46,13 @@ export function GiftDetails({ gift, onSuccess, userId }: GiftDetailsProps) {
     }, 2000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentModelIndex((prev) => (prev + 1) % models.length);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, [models.length]);
 
   const percentageRemaining = (gift.remainingSupply / gift.totalSupply) * 100;
   
@@ -68,14 +85,7 @@ export function GiftDetails({ gift, onSuccess, userId }: GiftDetailsProps) {
       const randomBackground = BACKGROUNDS[Math.floor(Math.random() * BACKGROUNDS.length)];
 
       // 1. Create order intent on backend
-      const orderRes = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, giftId: gift.id, background: randomBackground })
-      });
-      
-      const orderData = await orderRes.json();
-      if (!orderRes.ok) throw new Error(orderData.error || 'Failed to create order');
+      const orderData = await api.createOrder(userId || 'anonymous', gift.id, randomBackground);
 
       setPaymentState('CONFIRMING');
 
@@ -101,17 +111,7 @@ export function GiftDetails({ gift, onSuccess, userId }: GiftDetailsProps) {
       setPaymentState('VERIFYING');
 
       // 4. Verify transaction on backend
-      const verifyRes = await fetch('/api/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          orderId: orderData.orderId,
-          // Extract boc from result for backend to verify
-          transactionHash: result.boc 
-        })
-      });
-
-      if (!verifyRes.ok) throw new Error('Payment verification failed');
+      await api.verifyOrder(orderData.orderId, result.boc);
 
       setPaymentState('SUCCESS');
       setTimeout(() => {
@@ -145,12 +145,19 @@ export function GiftDetails({ gift, onSuccess, userId }: GiftDetailsProps) {
           />
         </AnimatePresence>
         
-        {/* Transparent Gift Image Overlay */}
-        <img 
-          src={gift.image} 
-          alt={gift.name} 
-          className="relative z-10 w-40 h-40 object-contain drop-shadow-2xl" 
-        />
+        {/* Animated Gift Models Overlay */}
+        <AnimatePresence>
+          <motion.img 
+            key={currentModelIndex}
+            src={models[currentModelIndex]} 
+            alt={gift.name} 
+            initial={{ x: 100, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: -100, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="absolute z-10 w-40 h-40 object-contain drop-shadow-2xl" 
+          />
+        </AnimatePresence>
         
         {/* Subtle Gradient Overlay for depth */}
         <div className="absolute inset-0 z-10 bg-gradient-to-t from-[#1C1C1E] via-transparent to-transparent pointer-events-none" />
