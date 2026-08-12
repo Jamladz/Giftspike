@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { DynamicNumber } from './DynamicNumber';
 import { Gift } from '../types';
-import { Store, TrendingUp, Search, SlidersHorizontal, ArrowUpRight, Tag } from 'lucide-react';
+import { Store, TrendingUp, Search, SlidersHorizontal, ArrowUpRight, Tag, Hash, Sparkles } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface MarketViewProps {
@@ -9,53 +9,111 @@ interface MarketViewProps {
 }
 
 export function MarketView({ onSelectGift }: MarketViewProps) {
-  const [activeFilter, setActiveFilter] = useState<'ALL' | 'LEGENDARY' | 'RARE' | 'STARS'>('ALL');
+  const [activeFilter, setActiveFilter] = useState<'ALL' | 'LEGENDARY' | 'RARE' | 'OFFICIAL'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Sample Marketplace Listings
-  const marketListings = [
+  // Sample MRKT Listings with fixed models, backgrounds, serial numbers and percentages
+  const marketListings: (Gift & {
+    serialNumber: number;
+    background: string;
+    backgroundName: string;
+    backgroundRarity: string;
+    modelUrl: string;
+    modelName: string;
+    modelRarity: string;
+    isMrktListing: boolean;
+    seller: string;
+    rarity: 'LEGENDARY' | 'RARE' | 'OFFICIAL';
+  })[] = [
     {
       id: 'mrkt-1',
-      name: 'Telegram Star #849',
-      image: 'https://i.suar.me/ogamY/l',
-      priceGram: 28,
-      seller: 'alex_ton',
-      rarity: 'RARE',
+      name: 'Tele GT',
+      serialNumber: 42,
+      image: 'https://i.suar.me/ZzXKJ/l',
+      modelUrl: 'https://i.suar.me/ZzXKJ/l',
+      modelName: 'Golden Luxury',
+      modelRarity: '5%',
+      background: 'https://i.suar.me/V9BKK/l',
+      backgroundName: 'Gold',
+      backgroundRarity: '2%',
+      priceGram: 85,
+      seller: 'pavel_d',
+      rarity: 'LEGENDARY',
       totalSupply: 1000,
-      remainingSupply: 1,
-      status: 'AVAILABLE' as const,
+      remainingSupply: 0,
+      status: 'SOLD_OUT',
       createdAt: new Date().toISOString(),
+      isMrktListing: true,
     },
     {
       id: 'mrkt-2',
-      name: 'Crystal Duck #042',
-      image: 'https://i.suar.me/ogamY/l',
-      priceGram: 65,
-      seller: 'pavel_d',
-      rarity: 'LEGENDARY',
-      totalSupply: 500,
-      remainingSupply: 1,
-      status: 'LIMITED' as const,
+      name: 'Tele GT',
+      serialNumber: 142,
+      image: 'https://i.suar.me/0poq0/l',
+      modelUrl: 'https://i.suar.me/0poq0/l',
+      modelName: 'Stealth Black',
+      modelRarity: '15%',
+      background: 'https://i.suar.me/Lpozo/l',
+      backgroundName: 'Black',
+      backgroundRarity: '5%',
+      priceGram: 45,
+      seller: 'alex_ton',
+      rarity: 'RARE',
+      totalSupply: 1000,
+      remainingSupply: 0,
+      status: 'SOLD_OUT',
       createdAt: new Date().toISOString(),
+      isMrktListing: true,
     },
     {
       id: 'mrkt-3',
-      name: 'Cyber Sticker #1102',
-      image: 'https://i.suar.me/ogamY/l',
-      priceGram: 18,
+      name: 'Tele GT',
+      serialNumber: 258,
+      image: 'https://i.suar.me/ApeYO/l',
+      modelUrl: 'https://i.suar.me/ApeYO/l',
+      modelName: 'Cyber Green',
+      modelRarity: '20%',
+      background: 'https://i.suar.me/MpVKv/l',
+      backgroundName: 'Red',
+      backgroundRarity: '8%',
+      priceGram: 32,
       seller: 'crypto_cat',
-      rarity: 'STARS',
-      totalSupply: 5000,
-      remainingSupply: 1,
-      status: 'AVAILABLE' as const,
+      rarity: 'RARE',
+      totalSupply: 1000,
+      remainingSupply: 0,
+      status: 'SOLD_OUT',
       createdAt: new Date().toISOString(),
+      isMrktListing: true,
+    },
+    {
+      id: 'mrkt-4',
+      name: 'Tele GT',
+      serialNumber: 7,
+      image: 'https://i.suar.me/Gn3GN/l',
+      modelUrl: 'https://i.suar.me/Gn3GN/l',
+      modelName: 'Neon Pink',
+      modelRarity: '25%',
+      background: 'https://i.suar.me/2zOW9/l',
+      backgroundName: 'Burgundy',
+      backgroundRarity: '15%',
+      priceGram: 120,
+      seller: 'durov_official',
+      rarity: 'LEGENDARY',
+      totalSupply: 1000,
+      remainingSupply: 0,
+      status: 'SOLD_OUT',
+      createdAt: new Date().toISOString(),
+      isMrktListing: true,
     },
   ];
 
   const filteredListings = marketListings.filter((item) => {
     const matchesFilter =
       activeFilter === 'ALL' || item.rarity === activeFilter;
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch =
+      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      `#${item.serialNumber}`.includes(searchQuery) ||
+      item.modelName.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesFilter && matchesSearch;
   });
 
@@ -84,14 +142,14 @@ export function MarketView({ onSelectGift }: MarketViewProps) {
           <div>
             <p className="text-[9px] uppercase font-bold text-[#8E8E93]">Floor Price</p>
             <div className="flex items-center justify-center gap-1 font-bold text-sm text-[#F5F5F7] mt-0.5">
-              <DynamicNumber value={18} imageClassName="h-3" />
+              <DynamicNumber value={32} imageClassName="h-3" />
               <img src="https://i.suar.me/zXrj0/l" alt="GRAM" className="w-3.5 h-3.5 rounded-full object-cover shrink-0" />
             </div>
           </div>
           <div className="border-x border-[#3A3A3C]/60">
             <p className="text-[9px] uppercase font-bold text-[#8E8E93]">24h Volume</p>
             <div className="flex items-center justify-center gap-1 font-bold text-sm text-[#F5F5F7] mt-0.5">
-              <DynamicNumber value="4,820" imageClassName="h-3" />
+              <DynamicNumber value="8,420" imageClassName="h-3" />
               <img src="https://i.suar.me/zXrj0/l" alt="GRAM" className="w-3.5 h-3.5 rounded-full object-cover shrink-0" />
             </div>
           </div>
@@ -110,7 +168,7 @@ export function MarketView({ onSelectGift }: MarketViewProps) {
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8E8E93]" />
           <input
             type="text"
-            placeholder="Search MRKT listings..."
+            placeholder="Search MRKT by model, hashtag #042..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-[#1C1C1E] border border-[#2C2C2E] rounded-xl pl-10 pr-4 py-2.5 text-xs text-[#F5F5F7] placeholder-[#8E8E93] focus:outline-none focus:border-[#0088CC]"
@@ -118,7 +176,7 @@ export function MarketView({ onSelectGift }: MarketViewProps) {
         </div>
 
         <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-1">
-          {(['ALL', 'LEGENDARY', 'RARE', 'STARS'] as const).map((filter) => (
+          {(['ALL', 'LEGENDARY', 'RARE', 'OFFICIAL'] as const).map((filter) => (
             <button
               key={filter}
               onClick={() => setActiveFilter(filter)}
@@ -136,7 +194,7 @@ export function MarketView({ onSelectGift }: MarketViewProps) {
       </div>
 
       {/* Listings Grid */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
         {filteredListings.map((item) => (
           <div
             key={item.id}
@@ -145,16 +203,43 @@ export function MarketView({ onSelectGift }: MarketViewProps) {
           >
             <div>
               <div className="relative aspect-square bg-[#161618] rounded-xl flex items-center justify-center p-2 mb-2 overflow-hidden border border-[#2C2C2E]">
+                {/* Background image */}
                 <img
-                  src={item.image}
-                  alt={item.name}
-                  className="w-20 h-20 object-contain group-hover:scale-105 transition-transform"
+                  src={item.background}
+                  alt="background"
+                  className="absolute inset-0 w-full h-full object-cover object-center"
                 />
-                <span className="absolute top-1.5 left-1.5 text-[9px] font-bold bg-[#1C1C1E]/90 text-[#8E8E93] px-2 py-0.5 rounded-md border border-[#3A3A3C]">
+                
+                {/* Car Model Overlay */}
+                <img
+                  src={item.modelUrl}
+                  alt={item.name}
+                  className="relative z-10 w-20 h-20 object-contain drop-shadow-xl group-hover:scale-105 transition-transform"
+                />
+
+                {/* Serial Hashtag Badge */}
+                <span className="absolute top-1.5 right-1.5 z-20 text-[9px] font-black bg-black/60 backdrop-blur-md text-amber-400 px-1.5 py-0.5 rounded-md border border-white/10 font-mono">
+                  #{item.serialNumber}
+                </span>
+
+                {/* Seller Tag */}
+                <span className="absolute bottom-1.5 left-1.5 z-20 text-[8px] font-bold bg-black/50 backdrop-blur-md text-[#8E8E93] px-1.5 py-0.5 rounded">
                   @{item.seller}
                 </span>
               </div>
-              <p className="text-xs font-bold text-[#F5F5F7] truncate">{item.name}</p>
+
+              {/* Title with Serial */}
+              <p className="text-xs font-bold text-[#F5F5F7] truncate">{item.name} #{item.serialNumber}</p>
+              
+              {/* Trait badges */}
+              <div className="flex items-center gap-1 mt-1 flex-wrap">
+                <span className="text-[9px] text-[#8E8E93] bg-[#252528] px-1.5 py-0.5 rounded border border-[#3A3A3C] truncate max-w-[90px]">
+                  {item.modelName}
+                </span>
+                <span className="text-[9px] text-amber-400 bg-amber-500/10 px-1 py-0.5 rounded border border-amber-500/20 font-mono shrink-0">
+                  {item.backgroundName} ({item.backgroundRarity})
+                </span>
+              </div>
             </div>
 
             <div className="mt-3 pt-2 border-t border-[#2C2C2E] flex items-center justify-between">
@@ -165,7 +250,7 @@ export function MarketView({ onSelectGift }: MarketViewProps) {
                   <img src="https://i.suar.me/zXrj0/l" alt="GRAM" className="w-3.5 h-3.5 rounded-full object-cover shrink-0" />
                 </div>
               </div>
-              <div className="w-7 h-7 rounded-lg bg-[#0088CC] text-white flex items-center justify-center shadow-md">
+              <div className="w-7 h-7 rounded-lg bg-[#0088CC] text-white flex items-center justify-center shadow-md group-hover:bg-[#0099EE] transition-colors">
                 <ArrowUpRight className="w-4 h-4" />
               </div>
             </div>
@@ -175,3 +260,4 @@ export function MarketView({ onSelectGift }: MarketViewProps) {
     </div>
   );
 }
+

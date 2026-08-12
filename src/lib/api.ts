@@ -1,20 +1,37 @@
 import { Gift } from '../types';
 
 const INITIAL_GIFTS: Gift[] = [
-  { id: 'gift-1', name: 'Tele GT', image: 'https://i.suar.me/ogamY/l', priceGram: 25, totalSupply: 1000, remainingSupply: 742, status: 'AVAILABLE' }
+  { id: 'gift-1', name: 'Tele GT', image: 'https://i.suar.me/ogamY/l', priceGram: 25, totalSupply: 1000, remainingSupply: 742, status: 'AVAILABLE', createdAt: new Date().toISOString() }
 ];
 
-const BACKGROUNDS = [
-  'https://i.suar.me/2zOW9/l', // Burgundy
-  'https://i.suar.me/Lpozo/l', // Black
-  'https://i.suar.me/8zo1y/l', // Green
-  'https://i.suar.me/jv05v/l', // Brown
-  'https://i.suar.me/g46m5/l', // Orange
-  'https://i.suar.me/9zJo7/l', // Purple
-  'https://i.suar.me/V9BKK/l', // Gold
-  'https://i.suar.me/YQBX9/l', // Cyan
-  'https://i.suar.me/MpVKv/l', // Red
+const BACKGROUND_TRAITS = [
+  { name: 'Gold', url: 'https://i.suar.me/V9BKK/l', rarity: '2%', weight: 2 },
+  { name: 'Black', url: 'https://i.suar.me/Lpozo/l', rarity: '5%', weight: 5 },
+  { name: 'Red', url: 'https://i.suar.me/MpVKv/l', rarity: '8%', weight: 8 },
+  { name: 'Burgundy', url: 'https://i.suar.me/2zOW9/l', rarity: '15%', weight: 15 },
+  { name: 'Green', url: 'https://i.suar.me/8zo1y/l', rarity: '15%', weight: 15 },
+  { name: 'Purple', url: 'https://i.suar.me/9zJo7/l', rarity: '15%', weight: 15 },
+  { name: 'Cyan', url: 'https://i.suar.me/YQBX9/l', rarity: '15%', weight: 15 },
+  { name: 'Orange', url: 'https://i.suar.me/g46m5/l', rarity: '25%', weight: 25 },
 ];
+
+const MODEL_TRAITS = [
+  { name: 'Golden Luxury', url: 'https://i.suar.me/ZzXKJ/l', rarity: '5%', weight: 5 },
+  { name: 'Stealth Black', url: 'https://i.suar.me/0poq0/l', rarity: '15%', weight: 15 },
+  { name: 'Cyber Green', url: 'https://i.suar.me/ApeYO/l', rarity: '20%', weight: 20 },
+  { name: 'Neon Pink', url: 'https://i.suar.me/Gn3GN/l', rarity: '25%', weight: 25 },
+  { name: 'Classic Blue', url: 'https://i.suar.me/ogamY/l', rarity: '35%', weight: 35 },
+];
+
+function pickRandomTrait<T extends { weight: number }>(traits: T[]): T {
+  const totalWeight = traits.reduce((sum, trait) => sum + trait.weight, 0);
+  let random = Math.random() * totalWeight;
+  for (const trait of traits) {
+    if (random < trait.weight) return trait;
+    random -= trait.weight;
+  }
+  return traits[0];
+}
 
 // Helper to simulate network delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -36,12 +53,16 @@ export const api = {
     return INITIAL_GIFTS;
   },
 
-  createOrder: async (userId: string, giftId: string, background: string) => {
+  createOrder: async (userId: string, giftId: string, _background?: string) => {
     await delay(400);
     const gifts = await api.getGifts();
     const gift = gifts.find(g => g.id === giftId);
     if (!gift) throw new Error('Gift not found');
     if (gift.remainingSupply <= 0) throw new Error('Sold out');
+
+    const selectedBg = pickRandomTrait(BACKGROUND_TRAITS);
+    const selectedModel = pickRandomTrait(MODEL_TRAITS);
+    const serialNumber = (gift.totalSupply - gift.remainingSupply) + 1;
 
     const orderId = crypto.randomUUID();
     const newOrder = {
@@ -50,7 +71,13 @@ export const api = {
       giftId,
       amountGram: gift.priceGram,
       receiverAddress: 'UQCTZAMbXoN5T43K9gJXH8GYWBmIstXrUrdoV9kv3btN1Ad3', // Mock Address
-      background: background || BACKGROUNDS[1],
+      background: selectedBg.url,
+      backgroundName: selectedBg.name,
+      backgroundRarity: selectedBg.rarity,
+      modelUrl: selectedModel.url,
+      modelName: selectedModel.name,
+      modelRarity: selectedModel.rarity,
+      serialNumber,
       status: 'PENDING',
       createdAt: new Date().toISOString()
     };
@@ -61,7 +88,14 @@ export const api = {
     return {
       orderId,
       receiverAddress: newOrder.receiverAddress,
-      amountGram: gift.priceGram
+      amountGram: gift.priceGram,
+      background: selectedBg.url,
+      backgroundName: selectedBg.name,
+      backgroundRarity: selectedBg.rarity,
+      modelUrl: selectedModel.url,
+      modelName: selectedModel.name,
+      modelRarity: selectedModel.rarity,
+      serialNumber
     };
   },
 
@@ -105,12 +139,23 @@ export const api = {
     
     const gifts = await api.getGifts();
     
-    const myGifts = userOrders.map((order: any) => {
+    const myGifts = userOrders.map((order: any, idx: number) => {
       const gift = gifts.find((g: any) => g.id === order.giftId);
+      // Fallback values for legacy test orders
+      const defaultBg = BACKGROUND_TRAITS[idx % BACKGROUND_TRAITS.length];
+      const defaultModel = MODEL_TRAITS[idx % MODEL_TRAITS.length];
+      const serialNumber = order.serialNumber || (gift ? gift.totalSupply - gift.remainingSupply - idx : 258);
+
       return {
         ...gift,
         orderId: order.id,
-        background: order.background,
+        serialNumber,
+        background: order.background || defaultBg.url,
+        backgroundName: order.backgroundName || defaultBg.name,
+        backgroundRarity: order.backgroundRarity || defaultBg.rarity,
+        modelUrl: order.modelUrl || defaultModel.url,
+        modelName: order.modelName || defaultModel.name,
+        modelRarity: order.modelRarity || defaultModel.rarity,
         purchaseDate: order.createdAt
       };
     }).sort((a: any, b: any) => new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime());

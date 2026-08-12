@@ -9,7 +9,7 @@ interface GiftCardProps {
   onClick: (gift: Gift) => void;
 }
 
-export function GiftCard({ gift, onClick }: GiftCardProps) {
+export const GiftCard: React.FC<GiftCardProps> = ({ gift, onClick }) => {
   const isSoldOut = gift.status === 'SOLD_OUT';
 
   return (

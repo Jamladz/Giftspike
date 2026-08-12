@@ -138,6 +138,7 @@ export default function App() {
                   myGifts={myGifts} 
                   userId={userId} 
                   onExploreGifts={() => setActiveTab('gifts')} 
+                  onSelectGift={handleGiftClick}
                 />
               )}
             </>

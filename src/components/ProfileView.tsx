@@ -7,9 +7,10 @@ interface ProfileViewProps {
   myGifts: any[];
   userId: string;
   onExploreGifts: () => void;
+  onSelectGift?: (gift: any) => void;
 }
 
-export function ProfileView({ myGifts, userId, onExploreGifts }: ProfileViewProps) {
+export function ProfileView({ myGifts, userId, onExploreGifts, onSelectGift }: ProfileViewProps) {
   const userName = WebApp.initDataUnsafe?.user?.first_name || 'Telegram User';
   const userHandle = WebApp.initDataUnsafe?.user?.username;
 
@@ -91,7 +92,8 @@ export function ProfileView({ myGifts, userId, onExploreGifts }: ProfileViewProp
             {myGifts.map((gift) => (
               <div
                 key={gift.orderId}
-                className="bg-[#1C1C1E] rounded-2xl p-3 border border-[#2C2C2E] flex flex-col justify-between"
+                onClick={() => onSelectGift && onSelectGift(gift)}
+                className="bg-[#1C1C1E] rounded-2xl p-3 border border-[#2C2C2E] hover:border-[#0088CC]/50 cursor-pointer transition-all flex flex-col justify-between group"
               >
                 <div>
                   <div className="relative aspect-square bg-[#161618] rounded-xl flex items-center justify-center p-2 mb-2 overflow-hidden border border-[#2C2C2E]">
@@ -99,22 +101,30 @@ export function ProfileView({ myGifts, userId, onExploreGifts }: ProfileViewProp
                       <img 
                         src={gift.background} 
                         alt="background" 
-                        className="absolute inset-0 w-full h-full object-cover object-center opacity-90" 
+                        className="absolute inset-0 w-full h-full object-cover object-center" 
                       />
                     )}
                     <img 
-                      src={gift.image} 
+                      src={gift.modelUrl || gift.image} 
                       alt={gift.name} 
-                      className="relative z-10 w-20 h-20 object-contain drop-shadow-xl" 
+                      className="relative z-10 w-20 h-20 object-contain drop-shadow-xl group-hover:scale-105 transition-transform" 
                     />
-                    <span className="absolute top-1.5 right-1.5 z-20 text-[9px] font-black bg-green-500/80 backdrop-blur-md text-white px-2 py-0.5 rounded-md shadow-sm">
-                      OWNED
+                    <span className="absolute top-1.5 right-1.5 z-20 text-[9px] font-black bg-black/60 backdrop-blur-md text-amber-400 px-1.5 py-0.5 rounded-md border border-white/10 font-mono">
+                      #{gift.serialNumber || '258'}
                     </span>
                   </div>
-                  <p className="text-xs font-bold text-[#F5F5F7] truncate">{gift.name}</p>
-                  <p className="text-[10px] text-[#8E8E93] mt-0.5">
-                    {new Date(gift.purchaseDate).toLocaleDateString()}
-                  </p>
+                  
+                  <p className="text-xs font-bold text-[#F5F5F7] truncate">{gift.name} #{gift.serialNumber || '258'}</p>
+                  
+                  {/* Trait badges */}
+                  <div className="flex items-center gap-1 mt-1 flex-wrap">
+                    <span className="text-[9px] text-[#8E8E93] bg-[#252528] px-1.5 py-0.5 rounded border border-[#3A3A3C] truncate max-w-[100px]">
+                      {gift.modelName || 'Classic Blue'}
+                    </span>
+                    <span className="text-[9px] text-amber-400 bg-amber-500/10 px-1 py-0.5 rounded border border-amber-500/20 font-mono shrink-0">
+                      {gift.backgroundName || 'Black'} ({gift.backgroundRarity || '5%'})
+                    </span>
+                  </div>
                 </div>
 
                 <div className="mt-3 pt-2 border-t border-[#2C2C2E] flex items-center justify-between">
@@ -122,9 +132,9 @@ export function ProfileView({ myGifts, userId, onExploreGifts }: ProfileViewProp
                     <DynamicNumber value={gift.priceGram} imageClassName="h-3" />
                     <img src="https://i.suar.me/zXrj0/l" alt="GRAM" className="w-3.5 h-3.5 rounded-full object-cover shrink-0" />
                   </div>
-                  <button className="text-[10px] font-bold text-[#0088CC] bg-[#0088CC]/10 hover:bg-[#0088CC]/20 px-2.5 py-1 rounded-lg border border-[#0088CC]/20 transition-colors">
-                    List MRKT
-                  </button>
+                  <span className="text-[10px] font-bold text-[#0088CC] bg-[#0088CC]/10 group-hover:bg-[#0088CC]/20 px-2 py-0.5 rounded-lg border border-[#0088CC]/20 transition-colors">
+                    View
+                  </span>
                 </div>
               </div>
             ))}

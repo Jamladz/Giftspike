@@ -7,6 +7,18 @@ export interface Gift {
   remainingSupply: number;
   status: 'AVAILABLE' | 'LIMITED' | 'SOLD_OUT';
   createdAt: string;
+
+  // Fixed traits for purchased or MRKT gifts
+  serialNumber?: number;
+  background?: string;
+  backgroundName?: string;
+  backgroundRarity?: string;
+  modelUrl?: string;
+  modelName?: string;
+  modelRarity?: string;
+  seller?: string;
+  orderId?: string;
+  isMrktListing?: boolean;
 }
 
 export interface Order {
@@ -15,6 +27,13 @@ export interface Order {
   giftId: string;
   amountGram: number;
   receiverAddress: string;
+  background: string;
+  backgroundName?: string;
+  backgroundRarity?: string;
+  modelUrl?: string;
+  modelName?: string;
+  modelRarity?: string;
+  serialNumber?: number;
   status: 'PENDING' | 'PAID' | 'FAILED';
   transactionHash?: string;
   createdAt: string;
