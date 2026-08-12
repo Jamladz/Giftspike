@@ -46,7 +46,14 @@ export function GiftDetails({ gift, onSuccess, userId }: GiftDetailsProps) {
   const isOwned = !!gift.orderId;
   const isFixed = isOwned || !!gift.isMrktListing || !!gift.background || !!gift.modelUrl;
 
-  const models = [
+  const isCannon = gift.name === 'Cash Cannon' || gift.id === 'gift-2';
+  const models = isCannon ? [
+    'https://i.suar.me/6z9Ka/l',
+    'https://i.suar.me/vAdEW/l',
+    'https://i.suar.me/EpjKx/l',
+    'https://i.suar.me/PpMOQ/l',
+    'https://i.suar.me/WPBxr/l'
+  ] : [
     gift.image,
     'https://i.suar.me/Gn3GN/l',
     'https://i.suar.me/ApeYO/l',
