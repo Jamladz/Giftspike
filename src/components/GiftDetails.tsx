@@ -53,6 +53,7 @@ export function GiftDetails({ gift, onSuccess, userId }: GiftDetailsProps) {
   const [currentModelIndex, setCurrentModelIndex] = useState(0);
 
   const isOwned = !!gift.orderId;
+  const isAdminFreeMode = adminService.getAdminFreeMode();
   const isFixed = isOwned || !!gift.isMrktListing || !!gift.background || !!gift.modelUrl;
 
   const isCannon = gift.name === 'Cash Cannon' || gift.id === 'gift-2';
@@ -114,8 +115,6 @@ export function GiftDetails({ gift, onSuccess, userId }: GiftDetailsProps) {
     if (isOwned || isSoldOut) return;
     
     try {
-      const isAdminFreeMode = adminService.getAdminFreeMode();
-
       // Free Admin Purchase path
       if (isAdminFreeMode) {
         setPaymentState('PROCESSING');
@@ -503,6 +502,7 @@ export function GiftDetails({ gift, onSuccess, userId }: GiftDetailsProps) {
                 isSoldOut ? "bg-[#2A2A2D] text-[#8E8E93] border border-[#3A3A3C] cursor-not-allowed" :
                 paymentState === 'ERROR' ? "bg-red-500 text-white" :
                 paymentState === 'SUCCESS' ? "bg-green-500 text-white shadow-[0_4px_16px_rgba(34,197,94,0.3)]" :
+                isAdminFreeMode ? "bg-amber-500/20 border border-amber-500/40 hover:bg-amber-500/30 shadow-[0_4px_16px_rgba(245,158,11,0.2)]" :
                 "bg-[#0088CC] hover:bg-[#0099EE] text-white shadow-[0_4px_16px_rgba(0,136,204,0.3)]"
               )}
             >
@@ -516,11 +516,22 @@ export function GiftDetails({ gift, onSuccess, userId }: GiftDetailsProps) {
                 >
                   {paymentState === 'INITIAL' && !isSoldOut && (
                     <>
-                      <span className="font-extrabold tracking-tight">
-                        {gift.isMrktListing ? 'Buy on MRKT for' : 'Buy for'}
-                      </span>
-                      <DynamicNumber value={gift.priceGram} imageClassName="h-3.5" />
-                      <img src="https://i.suar.me/zXrj0/l" alt="GRAM" className="w-4 h-4 rounded-full object-cover shrink-0" />
+                      {isAdminFreeMode ? (
+                        <>
+                          <Sparkles className="w-4 h-4 text-amber-300" />
+                          <span className="font-extrabold tracking-tight text-amber-300">
+                            Buy for 0 GRAM (Admin Test)
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="font-extrabold tracking-tight">
+                            {gift.isMrktListing ? 'Buy on MRKT for' : 'Buy for'}
+                          </span>
+                          <DynamicNumber value={gift.priceGram} imageClassName="h-3.5" />
+                          <img src="https://i.suar.me/zXrj0/l" alt="GRAM" className="w-4 h-4 rounded-full object-cover shrink-0" />
+                        </>
+                      )}
                     </>
                   )}
                   {isSoldOut && (
