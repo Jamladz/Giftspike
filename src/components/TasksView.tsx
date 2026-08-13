@@ -150,7 +150,10 @@ export function TasksView({ userStars, onEarnStars }: TasksViewProps) {
         {/* Notice Line */}
         <div className="mt-3.5 pt-2.5 border-t border-white/10 relative z-10 flex items-center gap-1.5 text-[10.5px] text-amber-200/90 font-medium">
           <Star className="w-3.5 h-3.5 text-amber-400 shrink-0 fill-amber-400/20" />
-          <span className="truncate">Stars store launching soon! Gifts are currently bought with GRAM.</span>
+          <span className="flex items-center gap-1 truncate">
+            Stars store launching soon! Gifts are currently bought with
+            <img src="https://i.suar.me/zXrj0/l" alt="GRAM" className="w-3.5 h-3.5 rounded-full object-cover shrink-0 inline-block" />
+          </span>
         </div>
       </div>
 

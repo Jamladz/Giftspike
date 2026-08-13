@@ -12,7 +12,10 @@ import { MarketView } from './components/MarketView';
 import { ProfileView } from './components/ProfileView';
 import { Gift } from './types';
 import { Loader2 } from 'lucide-react';
-import { GiftSlider } from './components/GiftSlider';
+import { ReferralBanner } from './components/ReferralBanner';
+import { ReferralHub } from './components/ReferralHub';
+import { WalletModal } from './components/WalletModal';
+import { referralService } from './lib/referral';
 import { api } from './lib/api';
 
 export default function App() {
@@ -26,8 +29,19 @@ export default function App() {
     return saved ? parseInt(saved, 10) : 150;
   });
 
+  const [userGram, setUserGram] = useState<number>(() => {
+    const saved = localStorage.getItem('user_gram_balance');
+    return saved ? parseFloat(saved) : 0;
+  });
+
+  const handleUpdateGram = (newBalance: number) => {
+    setUserGram(newBalance);
+    localStorage.setItem('user_gram_balance', newBalance.toString());
+  };
+
   const [selectedGift, setSelectedGift] = useState<Gift | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [successOrderId, setSuccessOrderId] = useState<string | null>(null);
   const [successBackground, setSuccessBackground] = useState<string | null>(null);
 
@@ -50,6 +64,13 @@ export default function App() {
       document.documentElement.classList.add('dark');
     }
     
+    // Process referral on launch
+    const userName = WebApp.initDataUnsafe?.user?.first_name || `User @${userId.slice(-4)}`;
+    const refResult = referralService.processReferralOnLaunch(userId, userName);
+    if (refResult.success && refResult.welcomeBonus > 0) {
+      handleEarnStars(refResult.welcomeBonus);
+    }
+
     fetchGifts();
     fetchMyGifts();
   }, []);
@@ -132,17 +153,24 @@ export default function App() {
                 <DynamicNumber value={userStars} imageClassName="h-3 text-amber-400 font-bold" />
               </div>
 
-              {/* GRAM Balance Badge */}
-              <div className="bg-[#1C1C1E] border border-[#2C2C2E] hover:border-[#3A3A3C] rounded-full px-2.5 py-1 flex items-center gap-1.5 shadow-sm transition-colors">
+              {/* GRAM Balance Badge with + Button */}
+              <div className="bg-[#1C1C1E] border border-[#2C2C2E] hover:border-[#3A3A3C] rounded-full pl-2.5 pr-1 py-0.5 flex items-center gap-1.5 shadow-sm transition-colors">
                 <img src="https://i.suar.me/zXrj0/l" alt="GRAM" className="w-3.5 h-3.5 rounded-full object-cover shrink-0" />
-                <DynamicNumber value="1,240.50" imageClassName="h-3" />
+                <DynamicNumber value={userGram} imageClassName="h-3 font-bold" />
+                <button 
+                  onClick={() => setIsWalletModalOpen(true)}
+                  className="bg-blue-500 hover:bg-blue-600 active:scale-95 text-white w-5 h-5 rounded-full flex items-center justify-center font-black text-xs shadow-md transition-all cursor-pointer ml-0.5"
+                  title="إيداع وسحب GRAM & TON"
+                >
+                  +
+                </button>
               </div>
             </div>
           </div>
         </header>
 
         {/* Main Content */}
-        <main className="px-4 sm:px-6 md:px-8 pt-20 pb-28 max-w-5xl mx-auto">
+        <main className="px-3 sm:px-6 md:px-8 pt-16 pb-28 max-w-5xl mx-auto">
           {loading && activeTab === 'gifts' ? (
             <div className="flex justify-center items-center h-40">
               <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
@@ -150,8 +178,8 @@ export default function App() {
           ) : (
             <>
               {activeTab === 'gifts' && (
-                <div className="space-y-6">
-                  <GiftSlider />
+                <div className="space-y-3 sm:space-y-4">
+                  <ReferralBanner userId={userId} onOpenReferralHub={() => setActiveTab('referral')} />
                   <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-4 md:gap-5">
                     {gifts.map((gift) => (
                       <GiftCard key={gift.id} gift={gift} onClick={handleGiftClick} />
@@ -161,6 +189,14 @@ export default function App() {
               )}
 
               {activeTab === 'tasks' && <TasksView userStars={userStars} onEarnStars={handleEarnStars} />}
+
+              {activeTab === 'referral' && (
+                <ReferralHub 
+                  userId={userId} 
+                  userStars={userStars} 
+                  onEarnStars={handleEarnStars} 
+                />
+              )}
 
               {activeTab === 'mrkt' && (
                 <MarketView 
@@ -174,8 +210,10 @@ export default function App() {
                   myGifts={myGifts} 
                   userId={userId} 
                   userStars={userStars}
+                  userGram={userGram}
                   onExploreGifts={() => setActiveTab('gifts')} 
                   onSelectGift={handleGiftClick}
+                  onOpenWallet={() => setIsWalletModalOpen(true)}
                 />
               )}
             </>
@@ -202,6 +240,14 @@ export default function App() {
             />
           )}
         </BottomSheet>
+
+        {/* Deposit & Withdraw Wallet Modal (75% height sheet with TON Connect) */}
+        <WalletModal
+          isOpen={isWalletModalOpen}
+          onClose={() => setIsWalletModalOpen(false)}
+          userGram={userGram}
+          onUpdateGram={handleUpdateGram}
+        />
       </div>
     </TonConnectUIProvider>
   );

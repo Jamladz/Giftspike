@@ -7,11 +7,13 @@ interface ProfileViewProps {
   myGifts: any[];
   userId: string;
   userStars?: number;
+  userGram?: number;
   onExploreGifts: () => void;
   onSelectGift?: (gift: any) => void;
+  onOpenWallet?: () => void;
 }
 
-export function ProfileView({ myGifts, userId, userStars = 150, onExploreGifts, onSelectGift }: ProfileViewProps) {
+export function ProfileView({ myGifts, userId, userStars = 150, userGram = 0, onExploreGifts, onSelectGift, onOpenWallet }: ProfileViewProps) {
 
   const userName = WebApp.initDataUnsafe?.user?.first_name || 'Telegram User';
   const userHandle = WebApp.initDataUnsafe?.user?.username;
@@ -48,12 +50,33 @@ export function ProfileView({ myGifts, userId, userStars = 150, onExploreGifts, 
 
         {/* Stats Table / Rectangular Compact Horizontal Rows */}
         <div className="space-y-2 w-full">
+          {/* GRAM Balance Row */}
+          <div className="flex items-center justify-between bg-[#121215] hover:bg-[#16161A] px-3.5 py-2.5 rounded-xl border border-white/5 transition-all">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0 overflow-hidden">
+                <img src="https://i.suar.me/zXrj0/l" alt="GRAM Balance" className="w-4 h-4 rounded-full object-cover shrink-0" />
+              </div>
+              <span className="text-xs font-semibold text-neutral-300">GRAM Balance</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 font-bold text-xs sm:text-sm text-white">
+                <DynamicNumber value={userGram} imageClassName="h-3.5" />
+                <img src="https://i.suar.me/zXrj0/l" alt="GRAM" className="w-3.5 h-3.5 rounded-full object-cover shrink-0" />
+              </div>
+              <button
+                onClick={onOpenWallet}
+                className="bg-blue-500 hover:bg-blue-600 active:scale-95 text-white w-5 h-5 rounded-full flex items-center justify-center font-black text-xs shadow-md transition-all cursor-pointer"
+                title="إيداع وسحب"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
           {/* Gifts Row */}
           <div className="flex items-center justify-between bg-[#121215] hover:bg-[#16161A] px-3.5 py-2.5 rounded-xl border border-white/5 transition-all">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
-                <GiftIcon className="w-3.5 h-3.5 text-blue-400" />
-              </div>
+              <img src="https://i.suar.me/PpMvp/l" alt="Gifts" className="w-6 h-6 object-contain shrink-0" />
               <span className="text-xs font-semibold text-neutral-300">Gifts</span>
             </div>
             <div className="font-bold text-xs sm:text-sm text-white">
@@ -64,8 +87,8 @@ export function ProfileView({ myGifts, userId, userStars = 150, onExploreGifts, 
           {/* Gifts Value Row */}
           <div className="flex items-center justify-between bg-[#121215] hover:bg-[#16161A] px-3.5 py-2.5 rounded-xl border border-white/5 transition-all">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center shrink-0">
-                <Coins className="w-3.5 h-3.5 text-cyan-400" />
+              <div className="w-6 h-6 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center shrink-0 overflow-hidden">
+                <img src="https://i.suar.me/zXrj0/l" alt="Gifts Value" className="w-4 h-4 rounded-full object-cover shrink-0" />
               </div>
               <span className="text-xs font-semibold text-neutral-300">Gifts Value</span>
             </div>
@@ -78,9 +101,7 @@ export function ProfileView({ myGifts, userId, userStars = 150, onExploreGifts, 
           {/* App Stars Row */}
           <div className="flex items-center justify-between bg-[#121215] hover:bg-[#16161A] px-3.5 py-2.5 rounded-xl border border-white/5 transition-all">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
-                <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400/20" />
-              </div>
+              <img src="https://i.suar.me/pM1Qy/l" alt="App Stars" className="w-6 h-6 object-contain shrink-0" />
               <span className="text-xs font-semibold text-neutral-300">App Stars</span>
             </div>
             <div className="flex items-center gap-1.5 font-bold text-xs sm:text-sm text-amber-400">

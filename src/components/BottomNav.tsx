@@ -1,5 +1,5 @@
 import React from 'react';
-import { Gift, CheckSquare, Store, User } from 'lucide-react';
+import { Gift, CheckSquare, Users, Store, User } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion } from 'motion/react';
 
@@ -12,6 +12,7 @@ export function BottomNav({ activeTab, onChange }: BottomNavProps) {
   const tabs = [
     { id: 'gifts', icon: Gift, label: 'Gifts' },
     { id: 'tasks', icon: CheckSquare, label: 'Tasks' },
+    { id: 'referral', icon: Users, label: 'Friends' },
     { id: 'mrkt', icon: Store, label: 'MRKT' },
     { id: 'profile', icon: User, label: 'Profile' },
   ];
