@@ -99,7 +99,20 @@ export const api = {
   createOrder: async (userId: string, giftId: string, _background?: string) => {
     await delay(400);
     const gifts = await api.getGifts();
-    const gift = gifts.find(g => g.id === giftId);
+    let gift = gifts.find(g => g.id === giftId);
+    
+    // Support market gifts which are not in the main gifts array
+    if (!gift && giftId.startsWith('mrkt-')) {
+      gift = {
+        id: giftId,
+        name: giftId.includes('2') ? 'Cash Cannon' : 'Tele GT',
+        priceGram: 25,
+        remainingSupply: 1,
+        totalSupply: 1000,
+        status: 'AVAILABLE'
+      } as any;
+    }
+    
     if (!gift) throw new Error('Gift not found');
     if (gift.remainingSupply <= 0) throw new Error('Sold out');
 
@@ -157,7 +170,7 @@ export const api = {
     const giftIndex = gifts.findIndex((g: any) => g.id === order.giftId);
     const gift = gifts[giftIndex];
 
-    if (gift.remainingSupply <= 0) {
+    if (gift && gift.remainingSupply <= 0) {
       throw new Error('Gift sold out before payment completion');
     }
 
@@ -165,14 +178,16 @@ export const api = {
     orders[orderIndex] = { ...order, status: 'PAID', transactionHash };
     localStorage.setItem('tg_orders', JSON.stringify(orders));
 
-    // Decrement supply
-    const newSupply = gift.remainingSupply - 1;
-    gifts[giftIndex] = {
-      ...gift,
-      remainingSupply: newSupply,
-      status: newSupply === 0 ? 'SOLD_OUT' : gift.status
-    };
-    localStorage.setItem('tg_gifts', JSON.stringify(gifts));
+    // Decrement supply only for store gifts
+    if (giftIndex !== -1) {
+      const newSupply = gift.remainingSupply - 1;
+      gifts[giftIndex] = {
+        ...gift,
+        remainingSupply: newSupply,
+        status: newSupply === 0 ? 'SOLD_OUT' : gift.status
+      };
+      localStorage.setItem('tg_gifts', JSON.stringify(gifts));
+    }
 
     return { success: true, orderId };
   },
