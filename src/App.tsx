@@ -10,12 +10,14 @@ import { DynamicNumber } from './components/DynamicNumber';
 import { TasksView } from './components/TasksView';
 import { MarketView } from './components/MarketView';
 import { ProfileView } from './components/ProfileView';
+import { AdminDashboard } from './components/AdminDashboard';
 import { Gift } from './types';
 import { Loader2 } from 'lucide-react';
 import { ReferralBanner } from './components/ReferralBanner';
 import { ReferralHub } from './components/ReferralHub';
 import { WalletModal } from './components/WalletModal';
 import { referralService } from './lib/referral';
+import { adminService } from './lib/admin';
 import { api } from './lib/api';
 
 export default function App() {
@@ -42,6 +44,7 @@ export default function App() {
   const [selectedGift, setSelectedGift] = useState<Gift | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
+  const [isAdminDashboardOpen, setIsAdminDashboardOpen] = useState(false);
   const [successOrderId, setSuccessOrderId] = useState<string | null>(null);
   const [successBackground, setSuccessBackground] = useState<string | null>(null);
 
@@ -54,7 +57,10 @@ export default function App() {
   };
 
   // Use test user ID if not in Telegram environment
-  const userId = WebApp.initDataUnsafe?.user?.id?.toString() || 'test-user-123';
+  const tgUser = WebApp.initDataUnsafe?.user;
+  const userId = tgUser?.id?.toString() || 'test_user_id';
+  const userHandle = tgUser?.username || '';
+  const userName = tgUser?.first_name || 'Telegram User';
 
   useEffect(() => {
     // Initialize Telegram WebApp
@@ -63,9 +69,18 @@ export default function App() {
     if (WebApp.colorScheme === 'dark') {
       document.documentElement.classList.add('dark');
     }
+
+    // Register active user in admin database
+    adminService.registerOrUpdateUser({
+      id: userId,
+      username: userHandle,
+      first_name: userName,
+      userGram: userGram,
+      userStars: userStars,
+      giftsCount: myGifts.length,
+    });
     
     // Process referral on launch
-    const userName = WebApp.initDataUnsafe?.user?.first_name || `User @${userId.slice(-4)}`;
     const refResult = referralService.processReferralOnLaunch(userId, userName);
     if (refResult.success && refResult.welcomeBonus > 0) {
       handleEarnStars(refResult.welcomeBonus);
@@ -188,7 +203,13 @@ export default function App() {
                 </div>
               )}
 
-              {activeTab === 'tasks' && <TasksView userStars={userStars} onEarnStars={handleEarnStars} />}
+              {activeTab === 'tasks' && (
+                <TasksView 
+                  userStars={userStars} 
+                  onEarnStars={handleEarnStars} 
+                  onOpenWallet={() => setIsWalletModalOpen(true)} 
+                />
+              )}
 
               {activeTab === 'referral' && (
                 <ReferralHub 
@@ -214,6 +235,7 @@ export default function App() {
                   onExploreGifts={() => setActiveTab('gifts')} 
                   onSelectGift={handleGiftClick}
                   onOpenWallet={() => setIsWalletModalOpen(true)}
+                  onOpenAdmin={() => setIsAdminDashboardOpen(true)}
                 />
               )}
             </>
@@ -221,6 +243,15 @@ export default function App() {
         </main>
 
         <BottomNav activeTab={activeTab} onChange={setActiveTab} />
+
+        {/* Admin Dashboard View */}
+        {isAdminDashboardOpen && (
+          <AdminDashboard
+            onClose={() => setIsAdminDashboardOpen(false)}
+            userGram={userGram}
+            onUpdateGram={handleUpdateGram}
+          />
+        )}
 
         {/* Bottom Sheet for Details & Success */}
         <BottomSheet isOpen={isSheetOpen} onClose={closeSheet}>

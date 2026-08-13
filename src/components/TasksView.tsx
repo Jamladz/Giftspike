@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useTonWallet, useTonConnectUI } from '@tonconnect/ui-react';
 import { DynamicNumber } from './DynamicNumber';
-import { CheckCircle2, Flame, Sparkles, Users, Send, ArrowRight, Star } from 'lucide-react';
+import { CheckCircle2, Flame, Sparkles, Users, Send, ArrowRight, Star, Wallet } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface Task {
@@ -18,9 +19,13 @@ interface Task {
 interface TasksViewProps {
   userStars: number;
   onEarnStars: (amount: number) => void;
+  onOpenWallet?: () => void;
 }
 
-export function TasksView({ userStars, onEarnStars }: TasksViewProps) {
+export function TasksView({ userStars, onEarnStars, onOpenWallet }: TasksViewProps) {
+  const wallet = useTonWallet();
+  const [tonConnectUI] = useTonConnectUI();
+
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<'ALL' | 'daily' | 'social' | 'quest'>('ALL');
   
@@ -32,7 +37,7 @@ export function TasksView({ userStars, onEarnStars }: TasksViewProps) {
         title: 'Daily Check-in',
         reward: 25,
         category: 'daily',
-        iconUrl: 'https://i.suar.me/0poNZ/l',
+        iconUrl: 'https://i.suar.me/Npge9/l',
         completed: savedCompleted.includes('task-1'),
         actionText: 'Claim Stars',
       },
@@ -68,9 +73,43 @@ export function TasksView({ userStars, onEarnStars }: TasksViewProps) {
     return initialTasks;
   });
 
-  const handleTaskAction = (taskId: string) => {
+  // Dynamically update task-4 actionText based on wallet connection status
+  useEffect(() => {
+    setTasks((prev) =>
+      prev.map((t) => {
+        if (t.id === 'task-4' && !t.completed) {
+          return {
+            ...t,
+            actionText: wallet ? 'Claim Reward' : 'Connect Wallet',
+          };
+        }
+        return t;
+      })
+    );
+  }, [wallet]);
+
+  const handleTaskAction = async (taskId: string) => {
     const task = tasks.find((t) => t.id === taskId);
     if (!task || task.completed) return;
+
+    // Special handling for Connect TON Wallet task (task-4)
+    if (taskId === 'task-4') {
+      if (!wallet) {
+        // Wallet not connected -> Open deposit/wallet modal & trigger TON Connect
+        if (onOpenWallet) {
+          onOpenWallet();
+        } else {
+          try {
+            await tonConnectUI.openModal();
+          } catch (e) {
+            console.error(e);
+          }
+        }
+        setToastMessage('Connect your TON Wallet in the modal to claim 100 Stars!');
+        setTimeout(() => setToastMessage(null), 3500);
+        return;
+      }
+    }
 
     // Award stars
     onEarnStars(task.reward);
@@ -161,7 +200,7 @@ export function TasksView({ userStars, onEarnStars }: TasksViewProps) {
       <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide py-1">
         {[
           { id: 'ALL', label: 'All Tasks', iconUrl: null },
-          { id: 'daily', label: 'Daily', iconUrl: 'https://i.suar.me/0poNZ/l' },
+          { id: 'daily', label: 'Daily', iconUrl: 'https://i.suar.me/Npge9/l' },
           { id: 'social', label: 'Social', iconUrl: 'https://i.suar.me/4z58o/l' },
           { id: 'quest', label: 'Quests', iconUrl: 'https://i.suar.me/ZzXn0/l' },
         ].map((cat) => (
@@ -176,7 +215,7 @@ export function TasksView({ userStars, onEarnStars }: TasksViewProps) {
             )}
           >
             {cat.iconUrl && (
-              <img src={cat.iconUrl} alt={cat.label} className="w-4 h-4 object-contain shrink-0" />
+              <img src={cat.iconUrl} alt={cat.label} className="w-4 h-4 rounded-full object-cover shrink-0" />
             )}
             <span>{cat.label}</span>
           </button>
@@ -198,7 +237,7 @@ export function TasksView({ userStars, onEarnStars }: TasksViewProps) {
               <div className="flex items-center gap-3 min-w-0">
                 <div
                   className={cn(
-                    'w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border overflow-hidden transition-all shadow-sm',
+                    'w-12 h-12 rounded-full flex items-center justify-center shrink-0 border overflow-hidden transition-all shadow-sm',
                     task.completed
                       ? 'bg-green-500/10 border-green-500/20 text-green-400'
                       : 'bg-[#222225] border-[#3A3A3C]',
@@ -209,7 +248,7 @@ export function TasksView({ userStars, onEarnStars }: TasksViewProps) {
                     <img 
                       src={task.iconUrl} 
                       alt={task.title} 
-                      className="w-full h-full object-cover rounded-2xl transition-transform hover:scale-105" 
+                      className="w-full h-full object-cover rounded-full transition-transform hover:scale-105" 
                     />
                   ) : Icon ? (
                     <Icon className="w-5 h-5 text-[#0088CC]" />

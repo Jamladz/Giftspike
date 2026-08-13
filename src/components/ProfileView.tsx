@@ -1,6 +1,6 @@
 import React from 'react';
 import { DynamicNumber } from './DynamicNumber';
-import { User, Wallet, Sparkles, Gift as GiftIcon, ExternalLink, ArrowRight, ShieldCheck, Coins, Star } from 'lucide-react';
+import { User, Wallet, Sparkles, Gift as GiftIcon, ExternalLink, ArrowRight, ShieldCheck, Coins, Star, Key, Lock } from 'lucide-react';
 import WebApp from '@twa-dev/sdk';
 
 interface ProfileViewProps {
@@ -11,12 +11,15 @@ interface ProfileViewProps {
   onExploreGifts: () => void;
   onSelectGift?: (gift: any) => void;
   onOpenWallet?: () => void;
+  onOpenAdmin?: () => void;
 }
 
-export function ProfileView({ myGifts, userId, userStars = 150, userGram = 0, onExploreGifts, onSelectGift, onOpenWallet }: ProfileViewProps) {
+export function ProfileView({ myGifts, userId, userStars = 150, userGram = 0, onExploreGifts, onSelectGift, onOpenWallet, onOpenAdmin }: ProfileViewProps) {
 
-  const userName = WebApp.initDataUnsafe?.user?.first_name || 'Telegram User';
-  const userHandle = WebApp.initDataUnsafe?.user?.username;
+  const tgUser = WebApp.initDataUnsafe?.user;
+  const userName = tgUser?.first_name || 'Telegram User';
+  const userHandle = tgUser?.username || '';
+  const isAdminUser = userHandle.toLowerCase() === 'sekanedr_is';
 
   // Calculate total portfolio value
   const totalValueGram = myGifts.reduce((acc, item) => acc + (item.priceGram || 0), 0);
@@ -28,24 +31,46 @@ export function ProfileView({ myGifts, userId, userStars = 150, userGram = 0, on
         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
 
         {/* User Info Header (Compact Inline Row) */}
-        <div className="flex items-center gap-3 mb-3.5 pb-3 border-b border-white/10">
-          <div className="relative shrink-0">
-            <div className="w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-gradient-to-tr from-blue-500 to-cyan-400 p-0.5 shadow-md shadow-blue-500/20">
-              <div className="w-full h-full rounded-full bg-[#18181B] flex items-center justify-center text-xl sm:text-2xl">
-                👤
+        <div className="flex items-center justify-between mb-3.5 pb-3 border-b border-white/10">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="relative shrink-0">
+              <div className="w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-gradient-to-tr from-blue-500 to-cyan-400 p-0.5 shadow-md shadow-blue-500/20">
+                <div className="w-full h-full rounded-full bg-[#18181B] flex items-center justify-center text-xl sm:text-2xl">
+                  👤
+                </div>
+              </div>
+              <div className="absolute -bottom-0.5 -right-0.5 bg-emerald-500 rounded-full p-0.5 border-2 border-[#18181B]">
+                <ShieldCheck className="w-3 h-3 text-[#18181B]" />
               </div>
             </div>
-            <div className="absolute -bottom-0.5 -right-0.5 bg-emerald-500 rounded-full p-0.5 border-2 border-[#18181B]">
-              <ShieldCheck className="w-3 h-3 text-[#18181B]" />
+
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <h2 className="text-base sm:text-lg font-bold text-white tracking-tight truncate">{userName}</h2>
+                {isAdminUser && (
+                  <span className="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[9px] font-mono px-1.5 py-0.5 rounded-full font-bold">
+                    ADMIN
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] sm:text-xs text-neutral-400 font-mono mt-0.5 truncate">
+                {userHandle ? `@${userHandle}` : `ID: ${userId}`}
+              </p>
             </div>
           </div>
 
-          <div className="min-w-0 flex-1">
-            <h2 className="text-base sm:text-lg font-bold text-white tracking-tight truncate">{userName}</h2>
-            <p className="text-[11px] sm:text-xs text-neutral-400 font-mono mt-0.5 truncate">
-              {userHandle ? `@${userHandle}` : `ID: ${userId}`}
-            </p>
-          </div>
+          {/* Admin Key Access Button - strictly visible for @sekanedr_is */}
+          {isAdminUser && onOpenAdmin && (
+            <button
+              onClick={onOpenAdmin}
+              className="bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 hover:text-amber-200 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 flex items-center gap-1.5 shadow-sm cursor-pointer shrink-0"
+              title="لوحة تحكم الأدمن @sekanedr_is"
+            >
+              <Key className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden sm:inline">Admin</span>
+              <span>Key</span>
+            </button>
+          )}
         </div>
 
         {/* Stats Table / Rectangular Compact Horizontal Rows */}

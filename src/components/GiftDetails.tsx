@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../lib/utils';
 import { CheckCircle2, AlertCircle, Loader2, Sparkles, Hash, Layers, ShieldCheck } from 'lucide-react';
 import { api } from '../lib/api';
+import { adminService } from '../lib/admin';
 
 const BACKGROUNDS = [
   'https://i.suar.me/2zOW9/l', // Burgundy
@@ -113,6 +114,23 @@ export function GiftDetails({ gift, onSuccess, userId }: GiftDetailsProps) {
     if (isOwned || isSoldOut) return;
     
     try {
+      const isAdminFreeMode = adminService.getAdminFreeMode();
+
+      // Free Admin Purchase path
+      if (isAdminFreeMode) {
+        setPaymentState('PROCESSING');
+        const randomBackground = gift.background || BACKGROUNDS[Math.floor(Math.random() * BACKGROUNDS.length)];
+        const orderData = await api.createOrder(userId || 'anonymous', gift.id, randomBackground);
+        
+        // Auto verify for free admin testing
+        await api.verifyOrder(orderData.orderId, 'admin_free_test_boc');
+        setPaymentState('SUCCESS');
+        setTimeout(() => {
+          onSuccess(orderData.orderId, randomBackground);
+        }, 1200);
+        return;
+      }
+
       if (!wallet) {
         setPaymentState('CONNECTING');
         await tonConnectUI.openModal();
