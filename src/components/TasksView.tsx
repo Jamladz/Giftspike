@@ -32,7 +32,7 @@ export function TasksView({ userStars, onEarnStars }: TasksViewProps) {
         title: 'Daily Check-in',
         reward: 25,
         category: 'daily',
-        iconUrl: 'https://i.suar.me/Npge9/l',
+        iconUrl: 'https://i.suar.me/0poNZ/l',
         completed: savedCompleted.includes('task-1'),
         actionText: 'Claim Stars',
       },
@@ -106,37 +106,50 @@ export function TasksView({ userStars, onEarnStars }: TasksViewProps) {
         </div>
       )}
 
-      {/* Header Banner - Compact & Professional */}
-      <div className="bg-gradient-to-r from-[#1C1C1E] via-[#26262A] to-[#141417] rounded-2xl p-3.5 border border-[#3A3A3C] shadow-sm relative overflow-hidden">
-        <div className="absolute right-0 top-0 w-28 h-28 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
-        
-        <div className="flex items-center justify-between relative z-10 gap-2.5">
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5 mb-0.5">
-              <span className="text-[9px] font-black uppercase tracking-wider text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 flex items-center gap-1 shrink-0">
-                <img src="https://i.suar.me/pM1Qy/l" alt="Stars" className="w-3 h-3 object-contain" />
+      {/* Header Banner - Professional Card with Custom Image Background */}
+      <div className="relative rounded-2xl p-4 sm:p-5 border border-amber-500/30 shadow-xl overflow-hidden group">
+        {/* Background Image & Overlay */}
+        <div className="absolute inset-0 z-0">
+          <img 
+            src="https://i.suar.me/g46m5/l" 
+            alt="Tasks Background" 
+            className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
+          />
+          {/* Sophisticated Gradients for Contrast & Depth */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0E0E11]/95 via-[#0E0E11]/85 to-[#0E0E11]/60" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0E0E11] via-transparent to-black/40" />
+        </div>
+
+        {/* Ambient Glow Effects */}
+        <div className="absolute right-0 top-0 w-36 h-36 bg-amber-500/15 rounded-full blur-2xl pointer-events-none z-0" />
+
+        <div className="flex items-center justify-between relative z-10 gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <span className="text-[9.5px] font-black uppercase tracking-wider text-amber-300 bg-amber-500/20 px-2.5 py-1 rounded-full border border-amber-500/40 backdrop-blur-md flex items-center gap-1 shrink-0 shadow-sm">
+                <img src="https://i.suar.me/pM1Qy/l" alt="Stars" className="w-3.5 h-3.5 object-contain" />
                 Earn App Stars
               </span>
             </div>
-            <h2 className="text-base font-black text-[#F5F5F7] tracking-tight">Tasks & Quests</h2>
-            <p className="text-[11px] text-[#8E8E93] mt-0.5 truncate">
-              Complete tasks to earn App Stars for rewards!
+            <h2 className="text-lg sm:text-xl font-black text-white tracking-tight drop-shadow-sm">Tasks & Quests</h2>
+            <p className="text-xs text-neutral-300/90 mt-0.5 truncate font-medium">
+              Complete tasks to earn App Stars for exclusive rewards!
             </p>
           </div>
 
           {/* Stars Balance Counter Card */}
-          <div className="bg-[#141417]/90 px-3 py-1.5 rounded-xl border border-[#2C2C2E] text-center shrink-0 flex flex-col items-center justify-center shadow-inner">
-            <p className="text-[8px] uppercase font-bold text-[#8E8E93]">Your Stars</p>
-            <div className="flex items-center gap-1 font-black text-amber-400 text-xs sm:text-sm">
-              <img src="https://i.suar.me/pM1Qy/l" alt="Stars" className="w-3.5 h-3.5 object-contain shrink-0" />
-              <DynamicNumber value={userStars} imageClassName="h-3" />
+          <div className="bg-black/60 backdrop-blur-xl px-3.5 py-2 rounded-2xl border border-amber-500/30 text-center shrink-0 flex flex-col items-center justify-center shadow-2xl">
+            <p className="text-[8.5px] uppercase font-bold text-neutral-400 tracking-wider">Your Stars</p>
+            <div className="flex items-center gap-1 font-black text-amber-400 text-sm sm:text-base mt-0.5">
+              <img src="https://i.suar.me/pM1Qy/l" alt="Stars" className="w-4 h-4 object-contain shrink-0" />
+              <DynamicNumber value={userStars} imageClassName="h-3.5" />
             </div>
           </div>
         </div>
 
         {/* Notice Line */}
-        <div className="mt-2.5 pt-2 border-t border-[#3A3A3C]/50 flex items-center gap-1.5 text-[10px] text-amber-300/90">
-          <Star className="w-3 h-3 text-amber-400 shrink-0" />
+        <div className="mt-3.5 pt-2.5 border-t border-white/10 relative z-10 flex items-center gap-1.5 text-[10.5px] text-amber-200/90 font-medium">
+          <Star className="w-3.5 h-3.5 text-amber-400 shrink-0 fill-amber-400/20" />
           <span className="truncate">Stars store launching soon! Gifts are currently bought with GRAM.</span>
         </div>
       </div>
@@ -144,22 +157,25 @@ export function TasksView({ userStars, onEarnStars }: TasksViewProps) {
       {/* Category Navigation Pills */}
       <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide py-1">
         {[
-          { id: 'ALL', label: 'All Tasks' },
-          { id: 'daily', label: '⚡ Daily' },
-          { id: 'social', label: '🌐 Social' },
-          { id: 'quest', label: '🎯 Quests' },
+          { id: 'ALL', label: 'All Tasks', iconUrl: null },
+          { id: 'daily', label: 'Daily', iconUrl: 'https://i.suar.me/0poNZ/l' },
+          { id: 'social', label: 'Social', iconUrl: 'https://i.suar.me/4z58o/l' },
+          { id: 'quest', label: 'Quests', iconUrl: 'https://i.suar.me/ZzXn0/l' },
         ].map((cat) => (
           <button
             key={cat.id}
             onClick={() => setActiveCategory(cat.id as any)}
             className={cn(
-              'px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border shrink-0',
+              'px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border shrink-0 flex items-center gap-1.5',
               activeCategory === cat.id
-                ? 'bg-[#0088CC] text-white border-[#0088CC] shadow-sm'
+                ? 'bg-blue-500 text-white border-blue-500 shadow-sm'
                 : 'bg-[#18181A] text-[#8E8E93] border-[#2C2C2E] hover:border-[#3A3A3C] hover:text-[#F5F5F7]'
             )}
           >
-            {cat.label}
+            {cat.iconUrl && (
+              <img src={cat.iconUrl} alt={cat.label} className="w-4 h-4 object-contain shrink-0" />
+            )}
+            <span>{cat.label}</span>
           </button>
         ))}
       </div>

@@ -12,6 +12,7 @@ import { MarketView } from './components/MarketView';
 import { ProfileView } from './components/ProfileView';
 import { Gift } from './types';
 import { Loader2 } from 'lucide-react';
+import { GiftSlider } from './components/GiftSlider';
 import { api } from './lib/api';
 
 export default function App() {
@@ -117,10 +118,10 @@ export default function App() {
         <header className="fixed top-0 left-0 right-0 w-full z-40 bg-[#121214]/90 backdrop-blur-xl border-b border-[#2C2C2E]/60 pt-safe transition-all">
           <div className="flex items-center justify-between px-4 h-14 max-w-5xl mx-auto">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#0088CC] to-[#00AEEF] flex items-center justify-center shadow-md shadow-blue-500/15 shrink-0">
-                <img src="https://i.suar.me/zXrj0/l" alt="GRAM" className="w-5 h-5 object-cover rounded-full" />
+              <div className="w-9 h-9 rounded-xl bg-[#1C1C1E] border border-[#2C2C2E] flex items-center justify-center shadow-lg shrink-0 overflow-hidden">
+                <img src="https://i.suar.me/9zJ7w/l" alt="Logo" className="w-full h-full object-cover" />
               </div>
-              <h1 className="text-sm font-black text-[#F5F5F7] tracking-tight">GRAM Gifts</h1>
+              <h1 className="text-base font-bold text-[#F5F5F7] tracking-tight">GiftsVault</h1>
             </div>
 
             {/* Balances Badges */}
@@ -149,7 +150,8 @@ export default function App() {
           ) : (
             <>
               {activeTab === 'gifts' && (
-                <div className="space-y-3">
+                <div className="space-y-6">
+                  <GiftSlider />
                   <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-4 md:gap-5">
                     {gifts.map((gift) => (
                       <GiftCard key={gift.id} gift={gift} onClick={handleGiftClick} />

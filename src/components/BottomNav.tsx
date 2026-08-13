@@ -1,6 +1,7 @@
 import React from 'react';
 import { Gift, CheckSquare, Store, User } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { motion } from 'motion/react';
 
 interface BottomNavProps {
   activeTab: string;
@@ -16,8 +17,8 @@ export function BottomNav({ activeTab, onChange }: BottomNavProps) {
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-[#1C1C1E]/95 backdrop-blur-xl border-t border-[#2C2C2E] pb-safe z-30">
-      <div className="flex items-center justify-around h-20 px-6 max-w-5xl mx-auto">
+    <div className="fixed bottom-0 left-0 right-0 bg-[#121215]/90 backdrop-blur-2xl border-t border-white/10 pb-safe z-30 shadow-[0_-10px_25px_rgba(0,0,0,0.5)]">
+      <div className="flex items-center justify-around h-16 sm:h-18 px-4 max-w-md mx-auto relative">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -26,14 +27,29 @@ export function BottomNav({ activeTab, onChange }: BottomNavProps) {
               key={tab.id}
               onClick={() => onChange(tab.id)}
               className={cn(
-                "flex flex-col items-center justify-center h-full gap-1 transition-all",
-                isActive ? "text-[#0088CC]" : "text-[#8E8E93] opacity-60 hover:opacity-100"
+                "relative flex flex-col items-center justify-center flex-1 h-full gap-1 transition-all duration-200 cursor-pointer select-none",
+                isActive ? "text-blue-400 font-bold" : "text-[#8E8E93] hover:text-white/80"
               )}
             >
-              <div className={cn("w-6 h-6 rounded flex items-center justify-center", isActive && "bg-[#0088CC]/10")}>
-                <Icon className={cn("w-5 h-5", isActive && "fill-[#0088CC]/20")} strokeWidth={isActive ? 2.5 : 2} />
+              {isActive && (
+                <motion.div
+                  layoutId="activeTabGlow"
+                  className="absolute inset-x-2 top-2 bottom-2 bg-blue-500/15 border border-blue-400/20 rounded-2xl -z-10 shadow-sm shadow-blue-500/20"
+                  transition={{ type: "spring", stiffness: 400, damping: 35 }}
+                />
+              )}
+              <div className="relative flex items-center justify-center">
+                <Icon
+                  className={cn(
+                    "w-5 h-5 transition-transform duration-200",
+                    isActive ? "scale-110 text-blue-400 fill-blue-400/20" : "scale-100"
+                  )}
+                  strokeWidth={isActive ? 2.5 : 2}
+                />
               </div>
-              <span className="text-[10px] font-bold">{tab.label}</span>
+              <span className={cn("text-[10px] tracking-wide transition-colors", isActive ? "text-blue-400 font-extrabold" : "font-semibold")}>
+                {tab.label}
+              </span>
             </button>
           );
         })}
