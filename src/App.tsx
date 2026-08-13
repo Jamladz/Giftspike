@@ -259,6 +259,10 @@ export default function App() {
             <GiftDetails 
               gift={selectedGift} 
               onSuccess={handlePurchaseSuccess}
+              onListed={() => {
+                fetchMyGifts();
+                closeSheet();
+              }}
               userId={userId} 
             />
           )}

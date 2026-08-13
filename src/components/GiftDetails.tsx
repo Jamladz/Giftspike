@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import WebApp from '@twa-dev/sdk';
 import { Gift, PaymentState } from '../types';
 import { DynamicNumber } from './DynamicNumber';
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../lib/utils';
-import { CheckCircle2, AlertCircle, Loader2, Sparkles, Hash, Layers, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Loader2, Sparkles, Hash, Layers, ShieldCheck, X, Tag } from 'lucide-react';
 import { api } from '../lib/api';
 import { adminService } from '../lib/admin';
 
@@ -42,19 +43,67 @@ interface GiftDetailsProps {
     seller?: string;
   };
   onSuccess: (orderId: string, background?: string) => void;
+  onListed?: () => void;
   userId?: string;
 }
 
-export function GiftDetails({ gift, onSuccess, userId }: GiftDetailsProps) {
+export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsProps) {
   const [tonConnectUI] = useTonConnectUI();
   const wallet = useTonWallet();
   const [paymentState, setPaymentState] = useState<PaymentState>('INITIAL');
   const [currentBgIndex, setCurrentBgIndex] = useState(0);
   const [currentModelIndex, setCurrentModelIndex] = useState(0);
 
+  // Market selling state
+  const [isSellingMode, setIsSellingMode] = useState(false);
+  const [sellPrice, setSellPrice] = useState('');
+
   const isOwned = !!gift.orderId;
   const isAdminFreeMode = adminService.getAdminFreeMode();
   const isFixed = isOwned || !!gift.isMrktListing || !!gift.background || !!gift.modelUrl;
+
+  const handleListOnMarket = () => {
+    const price = parseInt(sellPrice);
+    if (!price || price <= 0) return;
+
+    // Add to market listings
+    const currentListings = JSON.parse(localStorage.getItem('market_active_listings') || '[]');
+    const newListing = {
+      id: `mrkt-usr-${Date.now()}`,
+      name: gift.name,
+      serialNumber: gift.serialNumber || 258,
+      image: gift.modelUrl || gift.image,
+      modelUrl: gift.modelUrl,
+      modelName: gift.modelName,
+      modelRarity: gift.modelRarity,
+      background: gift.background,
+      backgroundName: gift.backgroundName,
+      backgroundRarity: gift.backgroundRarity,
+      priceGram: price,
+      seller: WebApp.initDataUnsafe?.user?.username || 'you',
+      totalSupply: gift.totalSupply,
+      remainingSupply: 1,
+    };
+    
+    localStorage.setItem('market_active_listings', JSON.stringify([newListing, ...currentListings]));
+    
+    // Update order status to hide it from Profile
+    const orders = JSON.parse(localStorage.getItem('tg_orders') || '[]');
+    const updatedOrders = orders.map((o: any) => {
+      if (o.id === gift.orderId) {
+        return { ...o, status: 'LISTED_ON_MRKT' };
+      }
+      return o;
+    });
+    localStorage.setItem('tg_orders', JSON.stringify(updatedOrders));
+
+    setPaymentState('SUCCESS');
+    setTimeout(() => {
+      if (onListed) {
+        onListed();
+      }
+    }, 1500);
+  };
 
   const isCannon = gift.name === 'Cash Cannon' || gift.id === 'gift-2';
   const models = isCannon ? [
@@ -486,13 +535,61 @@ export function GiftDetails({ gift, onSuccess, userId }: GiftDetailsProps) {
         {/* Fixed Bottom Action Button */}
         <div className="fixed bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-[#1C1C1E] via-[#1C1C1E]/95 to-transparent z-20 max-w-md mx-auto">
           {isOwned ? (
-            <button
-              disabled
-              className="w-full h-10 rounded-xl flex items-center justify-center gap-2 bg-green-500/20 border border-green-500/40 text-green-400 text-xs font-bold shadow-lg"
-            >
-              <ShieldCheck className="w-4 h-4" />
-              <span>In Your Collection (#{gift.serialNumber || '258'})</span>
-            </button>
+            <div className="flex flex-col gap-2">
+              <AnimatePresence>
+                {isSellingMode && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="flex gap-2"
+                  >
+                    <div className="relative flex-1">
+                      <input
+                        type="number"
+                        value={sellPrice}
+                        onChange={(e) => setSellPrice(e.target.value)}
+                        placeholder="Price in GRAM"
+                        className="w-full h-10 bg-[#252528] rounded-xl border border-[#3A3A3C] px-3 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors"
+                      />
+                      <img src="https://i.suar.me/zXrj0/l" alt="GRAM" className="w-4 h-4 rounded-full absolute right-3 top-1/2 -translate-y-1/2" />
+                    </div>
+                    <button
+                      onClick={handleListOnMarket}
+                      disabled={!sellPrice || parseInt(sellPrice) <= 0 || paymentState === 'PROCESSING' || paymentState === 'SUCCESS'}
+                      className="h-10 px-4 rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold shadow-lg transition-all disabled:opacity-50 flex items-center justify-center"
+                    >
+                      {paymentState === 'SUCCESS' ? <CheckCircle2 className="w-4 h-4" /> : 'Confirm'}
+                    </button>
+                    <button
+                      onClick={() => setIsSellingMode(false)}
+                      className="h-10 px-3 rounded-xl bg-[#3A3A3C] hover:bg-[#4A4A4C] text-white transition-all flex items-center justify-center"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              
+              {!isSellingMode && (
+                <div className="flex gap-2">
+                  <button
+                    disabled
+                    className="flex-1 h-10 rounded-xl flex items-center justify-center gap-2 bg-green-500/20 border border-green-500/40 text-green-400 text-xs font-bold shadow-lg"
+                  >
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>In Collection (#{gift.serialNumber || '258'})</span>
+                  </button>
+                  <button
+                    onClick={() => setIsSellingMode(true)}
+                    className="h-10 px-4 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-400 hover:bg-amber-500/30 text-xs font-bold transition-all flex items-center gap-2 shadow-lg"
+                  >
+                    <Tag className="w-4 h-4" />
+                    <span>Sell</span>
+                  </button>
+                </div>
+              )}
+            </div>
           ) : (
             <button
               onClick={handleBuy}
