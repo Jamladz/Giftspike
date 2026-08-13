@@ -127,28 +127,37 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
     }
   };
 
-  const isCannon = gift.name === 'Cash Cannon' || gift.id === 'gift-2';
-  const models = isCannon ? [
-    'https://i.suar.me/6z9Ka/l',
-    'https://i.suar.me/vAdEW/l',
-    'https://i.suar.me/EpjKx/l',
-    'https://i.suar.me/PpMOQ/l',
-    'https://i.suar.me/WPBxr/l'
-  ] : [
+  let models = [
     gift.image,
     'https://i.suar.me/Gn3GN/l',
     'https://i.suar.me/ApeYO/l',
     'https://i.suar.me/0poq0/l',
     'https://i.suar.me/ZzXKJ/l'
   ];
+  let modelNames = ['Classic Blue', 'Neon Pink', 'Emerald Green', 'Sunset Orange', 'Cyber Silver'];
+  let modelRarities = ['40%', '25%', '20%', '10%', '5%'];
 
-  const modelNames = isCannon 
-    ? ['Matte Black', 'Ruby Red', 'Electric Cyan', 'Gold Deluxe', 'Diamond Cannon']
-    : ['Classic Blue', 'Neon Pink', 'Emerald Green', 'Sunset Orange', 'Cyber Silver'];
-
-  const modelRarities = isCannon
-    ? ['45%', '25%', '15%', '10%', '5%']
-    : ['40%', '25%', '20%', '10%', '5%'];
+  if (gift.name === 'Cash Cannon' || gift.id === 'gift-2') {
+    models = [
+      'https://i.suar.me/6z9Ka/l',
+      'https://i.suar.me/vAdEW/l',
+      'https://i.suar.me/EpjKx/l',
+      'https://i.suar.me/PpMOQ/l',
+      'https://i.suar.me/WPBxr/l'
+    ];
+    modelNames = ['Matte Black', 'Ruby Red', 'Electric Cyan', 'Gold Deluxe', 'Diamond Cannon'];
+    modelRarities = ['45%', '25%', '15%', '10%', '5%'];
+  } else if (gift.name === 'Champion Bear' || gift.id === 'gift-3') {
+    models = [
+      'https://i.suar.me/Npgv0/l',
+      'https://i.suar.me/lZBEl/l',
+      'https://i.suar.me/Op9jM/l',
+      'https://i.suar.me/e9BpG/l',
+      'https://i.suar.me/qvlEx/l'
+    ];
+    modelNames = ['Argentina', 'Spain', 'Brazil', 'England', 'Norway'];
+    modelRarities = ['20%', '20%', '20%', '20%', '20%'];
+  }
 
   useEffect(() => {
     if (isFixed) return;

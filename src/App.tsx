@@ -66,6 +66,15 @@ export default function App() {
     // Initialize Telegram WebApp
     WebApp.ready();
     WebApp.expand();
+    
+    // Seamless Native Integration: Match Telegram's native header with our app's header
+    try {
+      WebApp.setHeaderColor('#121214'); // Matches our fixed header bg
+      WebApp.setBackgroundColor('#080809'); // Matches our main body bg
+    } catch (e) {
+      console.warn('Telegram WebApp theme colors not fully supported in this version');
+    }
+
     if (WebApp.colorScheme === 'dark') {
       document.documentElement.classList.add('dark');
     }

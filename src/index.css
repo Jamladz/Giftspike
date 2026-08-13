@@ -2,10 +2,13 @@
 
 @layer utilities {
   .pb-safe {
-    padding-bottom: env(safe-area-inset-bottom, 20px);
+    padding-bottom: var(--tg-safe-area-inset-bottom, env(safe-area-inset-bottom, 20px));
   }
   .pt-safe {
-    padding-top: env(safe-area-inset-top, 20px);
+    /* In Telegram Mini Apps, the native header handles the top notch.
+       Using env(safe-area-inset-top) causes double-padding on iOS Telegram. 
+       We rely on Telegram's CSS variables if available, otherwise 0. */
+    padding-top: var(--tg-safe-area-inset-top, 0px);
   }
 }
 

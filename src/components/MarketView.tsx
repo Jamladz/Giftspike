@@ -62,6 +62,11 @@ const ALL_MODELS = [
   { name: 'Ruby Launcher', giftName: 'Cash Cannon', url: 'https://i.suar.me/EpjKx/l', rarity: '20%', basePrice: 70 },
   { name: 'Neon Cash', giftName: 'Cash Cannon', url: 'https://i.suar.me/vAdEW/l', rarity: '25%', basePrice: 50 },
   { name: 'Gold Standard', giftName: 'Cash Cannon', url: 'https://i.suar.me/6z9Ka/l', rarity: '35%', basePrice: 32 },
+  { name: 'Argentina', giftName: 'Champion Bear', url: 'https://i.suar.me/Npgv0/l', rarity: '20%', basePrice: 10 },
+  { name: 'Spain', giftName: 'Champion Bear', url: 'https://i.suar.me/lZBEl/l', rarity: '20%', basePrice: 8 },
+  { name: 'Brazil', giftName: 'Champion Bear', url: 'https://i.suar.me/Op9jM/l', rarity: '20%', basePrice: 8 },
+  { name: 'England', giftName: 'Champion Bear', url: 'https://i.suar.me/e9BpG/l', rarity: '20%', basePrice: 7 },
+  { name: 'Norway', giftName: 'Champion Bear', url: 'https://i.suar.me/qvlEx/l', rarity: '20%', basePrice: 5 },
 ];
 
 const BACKGROUND_OPTIONS = [
@@ -106,8 +111,7 @@ function calculateItemPrice(model: typeof ALL_MODELS[0], bg: typeof BACKGROUND_O
 function generateActiveListings(count = 320) {
   const items = [];
   for (let i = 1; i <= count; i++) {
-    const isCannon = i % 2 === 0;
-    const giftName = isCannon ? 'Cash Cannon' : 'Tele GT';
+    const giftName = 'Champion Bear';
     const availableModels = ALL_MODELS.filter(m => m.giftName === giftName);
     const model = availableModels[Math.floor(Math.random() * availableModels.length)];
     const bg = BACKGROUND_OPTIONS[Math.floor(Math.random() * BACKGROUND_OPTIONS.length)];
@@ -136,7 +140,7 @@ function generateActiveListings(count = 320) {
       backgroundRarity: bg.rarity,
       priceGram,
       seller,
-      totalSupply: isCannon ? 500 : 1000,
+      totalSupply: 300000,
       remainingSupply: 1,
       status: 'AVAILABLE' as const,
       createdAt: new Date().toISOString(),
@@ -150,8 +154,7 @@ function generateActiveListings(count = 320) {
 function generateSoldListings(count = 160) {
   const items = [];
   for (let i = 1; i <= count; i++) {
-    const isCannon = i % 3 === 0;
-    const giftName = isCannon ? 'Cash Cannon' : 'Tele GT';
+    const giftName = 'Champion Bear';
     const availableModels = ALL_MODELS.filter(m => m.giftName === giftName);
     const model = availableModels[Math.floor(Math.random() * availableModels.length)];
     const bg = BACKGROUND_OPTIONS[Math.floor(Math.random() * BACKGROUND_OPTIONS.length)];
@@ -194,7 +197,7 @@ function generateSoldListings(count = 160) {
       seller,
       buyer,
       soldAt,
-      totalSupply: isCannon ? 500 : 1000,
+      totalSupply: 300000,
       remainingSupply: 0,
       status: 'SOLD_OUT' as const,
       createdAt: new Date().toISOString(),
@@ -223,13 +226,21 @@ export function MarketView({ onSelectGift, purchasedGiftIds }: MarketViewProps) 
   // Active Market Listings State
   const [activeMarketListings, setActiveMarketListings] = useState(() => {
     const saved = localStorage.getItem('market_active_listings');
-    return saved ? JSON.parse(saved) : generateActiveListings(320);
+    let parsed = saved ? JSON.parse(saved) : null;
+    if (parsed && !parsed.some((i: any) => i.name === 'Champion Bear')) {
+      parsed = null; // Force regenerate
+    }
+    return parsed || generateActiveListings(320);
   });
 
   // Sold Items History State
   const [soldMarketListings, setSoldMarketListings] = useState(() => {
     const saved = localStorage.getItem('market_sold_listings');
-    return saved ? JSON.parse(saved) : generateSoldListings(160);
+    let parsed = saved ? JSON.parse(saved) : null;
+    if (parsed && !parsed.some((i: any) => i.name === 'Champion Bear')) {
+      parsed = null; // Force regenerate
+    }
+    return parsed || generateSoldListings(160);
   });
 
   // Live Trading Engine Stats
@@ -410,8 +421,7 @@ export function MarketView({ onSelectGift, purchasedGiftIds }: MarketViewProps) 
 
       } else {
         // --- 3. BOT MINTS A BRAND NEW GIFT LISTING ---
-        const isCannon = Math.random() > 0.5;
-        const giftName = isCannon ? 'Cash Cannon' : 'Tele GT';
+        const giftName = 'Champion Bear';
         const matchingModels = ALL_MODELS.filter(m => m.giftName === giftName);
         const randomModel = matchingModels[Math.floor(Math.random() * matchingModels.length)];
         const randomBg = BACKGROUND_OPTIONS[Math.floor(Math.random() * BACKGROUND_OPTIONS.length)];
@@ -432,7 +442,7 @@ export function MarketView({ onSelectGift, purchasedGiftIds }: MarketViewProps) 
           backgroundRarity: randomBg.rarity,
           priceGram,
           seller,
-          totalSupply: isCannon ? 500 : 1000,
+          totalSupply: 300000,
           remainingSupply: 1,
           status: 'AVAILABLE' as const,
           createdAt: new Date().toISOString(),
@@ -672,7 +682,7 @@ export function MarketView({ onSelectGift, purchasedGiftIds }: MarketViewProps) 
                     <span>All Gifts</span>
                     {selectedGiftName === 'ALL' && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
                   </button>
-                  {['Tele GT', 'Cash Cannon'].map((name) => (
+                  {['Tele GT', 'Cash Cannon', 'Champion Bear'].map((name) => (
                     <button
                       key={name}
                       onClick={() => {

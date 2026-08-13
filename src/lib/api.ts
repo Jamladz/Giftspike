@@ -20,6 +20,16 @@ const INITIAL_GIFTS: Gift[] = [
     remainingSupply: 312, 
     status: 'AVAILABLE', 
     createdAt: new Date().toISOString() 
+  },
+  { 
+    id: 'gift-3', 
+    name: 'Champion Bear', 
+    image: 'https://i.suar.me/Npgv0/l', 
+    priceGram: 0.5, 
+    totalSupply: 300000, 
+    remainingSupply: 0, 
+    status: 'SOLD_OUT', 
+    createdAt: new Date().toISOString() 
   }
 ];
 
@@ -48,6 +58,14 @@ const CASH_CANNON_MODELS = [
   { name: 'Ruby Launcher', url: 'https://i.suar.me/EpjKx/l', rarity: '20%', weight: 20 },
   { name: 'Neon Cash', url: 'https://i.suar.me/vAdEW/l', rarity: '25%', weight: 25 },
   { name: 'Gold Standard', url: 'https://i.suar.me/6z9Ka/l', rarity: '35%', weight: 35 },
+];
+
+const CHAMPION_BEAR_MODELS = [
+  { name: 'Spain', url: 'https://i.suar.me/lZBEl/l', rarity: '20%', weight: 20 },
+  { name: 'Brazil', url: 'https://i.suar.me/Op9jM/l', rarity: '20%', weight: 20 },
+  { name: 'Argentina', url: 'https://i.suar.me/Npgv0/l', rarity: '20%', weight: 20 },
+  { name: 'England', url: 'https://i.suar.me/e9BpG/l', rarity: '20%', weight: 20 },
+  { name: 'Norway', url: 'https://i.suar.me/qvlEx/l', rarity: '20%', weight: 20 },
 ];
 
 function pickRandomTrait<T extends { weight: number }>(traits: T[]): T {
@@ -117,8 +135,12 @@ export const api = {
     if (gift.remainingSupply <= 0) throw new Error('Sold out');
 
     const selectedBg = pickRandomTrait(BACKGROUND_TRAITS);
-    const isCannon = gift.id === 'gift-2' || gift.name === 'Cash Cannon';
-    const modelTraits = isCannon ? CASH_CANNON_MODELS : TELE_GT_MODELS;
+    let modelTraits = TELE_GT_MODELS;
+    if (gift.id === 'gift-2' || gift.name === 'Cash Cannon') {
+      modelTraits = CASH_CANNON_MODELS;
+    } else if (gift.id === 'gift-3' || gift.name === 'Champion Bear') {
+      modelTraits = CHAMPION_BEAR_MODELS;
+    }
     const selectedModel = pickRandomTrait(modelTraits);
     const serialNumber = (gift.totalSupply - gift.remainingSupply) + 1;
 
@@ -201,8 +223,12 @@ export const api = {
     
     const myGifts = userOrders.map((order: any, idx: number) => {
       const gift = gifts.find((g: any) => g.id === order.giftId);
-      const isCannon = (gift && gift.name === 'Cash Cannon') || order.giftId === 'gift-2';
-      const modelTraits = isCannon ? CASH_CANNON_MODELS : TELE_GT_MODELS;
+      let modelTraits = TELE_GT_MODELS;
+      if (order.giftId === 'gift-2' || (gift && gift.name === 'Cash Cannon')) {
+        modelTraits = CASH_CANNON_MODELS;
+      } else if (order.giftId === 'gift-3' || (gift && gift.name === 'Champion Bear')) {
+        modelTraits = CHAMPION_BEAR_MODELS;
+      }
 
       // Fallback values for legacy test orders
       const defaultBg = BACKGROUND_TRAITS[idx % BACKGROUND_TRAITS.length];
