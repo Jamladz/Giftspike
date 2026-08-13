@@ -285,10 +285,12 @@ export function MarketView({ onSelectGift, purchasedGiftIds }: MarketViewProps) 
         if (boughtItems.length === 0) return prev;
 
         boughtItems.forEach(item => {
+          const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+          const buyerName = tgUser?.first_name || tgUser?.username || 'You';
           const soldItem = {
             ...item,
             id: `sold-user-${Date.now()}-${item.id}`,
-            buyer: 'you',
+            buyer: buyerName,
             soldAt: 'Just now',
           };
           setSoldMarketListings(sPrev => [soldItem, ...sPrev]);
@@ -909,7 +911,7 @@ export function MarketView({ onSelectGift, purchasedGiftIds }: MarketViewProps) 
         /* Professional Sold Deals Table View */
         <div className="space-y-2.5">
           {/* Table Header Bar */}
-          <div className="hidden md:grid grid-cols-12 gap-3 px-4 py-2 bg-[#161618] border border-[#2C2C2E] rounded-xl text-[10px] font-bold uppercase tracking-wider text-[#8E8E93]">
+          <div className="hidden">
             <div className="col-span-5 flex items-center gap-1.5">
               <span>Gift Item</span>
             </div>
@@ -1009,7 +1011,7 @@ export function MarketView({ onSelectGift, purchasedGiftIds }: MarketViewProps) 
         </div>
       ) : (
         /* Active Listings Grid */
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
           {visibleListings.map((item) => (
             <div
               key={item.id}

@@ -41,6 +41,7 @@ interface GiftDetailsProps {
     serialNumber?: number;
     isMrktListing?: boolean;
     seller?: string;
+    orderStatus?: string;
   };
   onSuccess: (orderId: string, background?: string) => void;
   onListed?: () => void;
@@ -59,6 +60,7 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
   const [sellPrice, setSellPrice] = useState('');
 
   const isOwned = !!gift.orderId;
+  const isListed = gift.orderStatus === 'LISTED_ON_MRKT';
   const isAdminFreeMode = adminService.getAdminFreeMode();
   const isFixed = isOwned || !!gift.isMrktListing || !!gift.background || !!gift.modelUrl;
 
@@ -70,6 +72,7 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
     const currentListings = JSON.parse(localStorage.getItem('market_active_listings') || '[]');
     const newListing = {
       id: `mrkt-usr-${Date.now()}`,
+      originalOrderId: gift.orderId,
       name: gift.name,
       serialNumber: gift.serialNumber || 258,
       image: gift.modelUrl || gift.image,
@@ -80,7 +83,7 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
       backgroundName: gift.backgroundName,
       backgroundRarity: gift.backgroundRarity,
       priceGram: price,
-      seller: WebApp.initDataUnsafe?.user?.username || 'you',
+      seller: WebApp.initDataUnsafe?.user?.first_name || WebApp.initDataUnsafe?.user?.username || 'You',
       totalSupply: gift.totalSupply,
       remainingSupply: 1,
     };
@@ -103,6 +106,25 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
         onListed();
       }
     }, 1500);
+  };
+
+  const handleCancelSale = () => {
+    const currentListings = JSON.parse(localStorage.getItem('market_active_listings') || '[]');
+    const updatedListings = currentListings.filter((l: any) => l.originalOrderId !== gift.orderId);
+    localStorage.setItem('market_active_listings', JSON.stringify(updatedListings));
+
+    const orders = JSON.parse(localStorage.getItem('tg_orders') || '[]');
+    const updatedOrders = orders.map((o: any) => {
+      if (o.id === gift.orderId) {
+        return { ...o, status: 'PAID' };
+      }
+      return o;
+    });
+    localStorage.setItem('tg_orders', JSON.stringify(updatedOrders));
+
+    if (onListed) {
+      onListed();
+    }
   };
 
   const isCannon = gift.name === 'Cash Cannon' || gift.id === 'gift-2';
@@ -533,7 +555,7 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
         )}
 
         {/* Fixed Bottom Action Button */}
-        <div className="fixed bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-[#1C1C1E] via-[#1C1C1E]/95 to-transparent z-20 max-w-md mx-auto">
+        <div className="fixed bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-[#1C1C1E] via-[#1C1C1E]/95 to-transparent z-20 max-w-[480px] mx-auto">
           {isOwned ? (
             <div className="flex flex-col gap-2">
               <AnimatePresence>
@@ -578,15 +600,25 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
                     className="flex-1 h-10 rounded-xl flex items-center justify-center gap-2 bg-green-500/20 border border-green-500/40 text-green-400 text-xs font-bold shadow-lg"
                   >
                     <ShieldCheck className="w-4 h-4" />
-                    <span>In Collection (#{gift.serialNumber || '258'})</span>
+                    <span>{isListed ? `For Sale (#${gift.serialNumber || '258'})` : `In Collection (#${gift.serialNumber || '258'})`}</span>
                   </button>
-                  <button
-                    onClick={() => setIsSellingMode(true)}
-                    className="h-10 px-4 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-400 hover:bg-amber-500/30 text-xs font-bold transition-all flex items-center gap-2 shadow-lg"
-                  >
-                    <Tag className="w-4 h-4" />
-                    <span>Sell</span>
-                  </button>
+                  {isListed ? (
+                    <button
+                      onClick={handleCancelSale}
+                      className="h-10 px-4 rounded-xl bg-red-500/20 border border-red-500/40 text-red-400 hover:bg-red-500/30 text-xs font-bold transition-all flex items-center gap-2 shadow-lg"
+                    >
+                      <X className="w-4 h-4" />
+                      <span>Cancel Sale</span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setIsSellingMode(true)}
+                      className="h-10 px-4 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-400 hover:bg-amber-500/30 text-xs font-bold transition-all flex items-center gap-2 shadow-lg"
+                    >
+                      <Tag className="w-4 h-4" />
+                      <span>Sell</span>
+                    </button>
+                  )}
                 </div>
               )}
             </div>

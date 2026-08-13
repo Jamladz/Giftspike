@@ -174,7 +174,7 @@ export function ProfileView({ myGifts, userId, userStars = 150, userGram = 0, on
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
             {myGifts.map((gift) => (
               <div
                 key={gift.orderId}
@@ -198,6 +198,11 @@ export function ProfileView({ myGifts, userId, userStars = 150, userGram = 0, on
                     <span className="absolute top-1.5 right-1.5 z-20 text-[9px] font-black bg-black/60 backdrop-blur-md text-amber-400 px-1.5 py-0.5 rounded-md border border-white/10 font-mono">
                       #{gift.serialNumber || '258'}
                     </span>
+                    {gift.orderStatus === 'LISTED_ON_MRKT' && (
+                      <span className="absolute top-1.5 left-1.5 z-20 text-[8px] font-black bg-blue-500 text-white px-1.5 py-0.5 rounded-sm border border-blue-400/50 shadow-lg">
+                        FOR SALE
+                      </span>
+                    )}
                   </div>
                   
                   <p className="text-xs font-bold text-[#F5F5F7] truncate">{gift.name} #{gift.serialNumber || '258'}</p>

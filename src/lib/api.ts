@@ -195,7 +195,7 @@ export const api = {
   getMyGifts: async (userId: string) => {
     await delay(300);
     const orders = JSON.parse(localStorage.getItem('tg_orders') || '[]');
-    const userOrders = orders.filter((o: any) => o.userId === (userId || 'anonymous') && o.status === 'PAID');
+    const userOrders = orders.filter((o: any) => o.userId === (userId || 'anonymous') && (o.status === 'PAID' || o.status === 'LISTED_ON_MRKT'));
     
     const gifts = await api.getGifts();
     
@@ -212,6 +212,7 @@ export const api = {
       return {
         ...gift,
         orderId: order.id,
+        orderStatus: order.status,
         serialNumber,
         background: order.background || defaultBg.url,
         backgroundName: order.backgroundName || defaultBg.name,

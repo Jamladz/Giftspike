@@ -46,7 +46,7 @@ export function BottomSheet({ isOpen, onClose, children }: BottomSheetProps) {
                 onClose();
               }
             }}
-            className="fixed bottom-0 left-0 right-0 max-h-[85vh] md:max-w-md md:mx-auto md:bottom-6 md:rounded-[32px] md:border md:border-[#3A3A3C] bg-[#1C1C1E] border-t border-[#3A3A3C] z-50 rounded-t-[32px] overflow-hidden flex flex-col shadow-[0_-20px_40px_rgba(0,0,0,0.6)]"
+            className="fixed bottom-0 left-0 right-0 max-h-[85vh] max-w-[480px] mx-auto sm:bottom-0 sm:border-x sm:border-[#3A3A3C] bg-[#1C1C1E] border-t border-[#3A3A3C] z-50 rounded-t-[32px] overflow-hidden flex flex-col shadow-[0_-20px_40px_rgba(0,0,0,0.6)]"
           >
             {/* Handle Overlay */}
             <div className="absolute top-2.5 left-1/2 -translate-x-1/2 z-20 cursor-grab active:cursor-grabbing bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-white/5">

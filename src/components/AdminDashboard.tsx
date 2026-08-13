@@ -93,10 +93,11 @@ export function AdminDashboard({ onClose, onGrantFreeGift, userGram, onUpdateGra
   const pendingCount = withdrawals.filter(w => w.status === 'PENDING').length;
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#0A0A0C] text-[#F5F5F7] overflow-y-auto flex flex-col animate-fadeIn">
+    <div className="fixed inset-0 z-50 bg-black/80 sm:backdrop-blur-sm text-[#F5F5F7] overflow-y-auto flex justify-center animate-fadeIn">
+      <div className="w-full max-w-[480px] min-h-screen bg-[#0A0A0C] flex flex-col relative sm:border-x border-[#2C2C2E]/40 shadow-2xl">
       {/* Toast Notification */}
       {toast && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-blue-500 text-white font-bold text-xs px-4 py-2.5 rounded-full shadow-2xl flex items-center gap-2 border border-blue-400/30 animate-bounce">
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-blue-500 text-white font-bold text-xs px-4 py-2.5 rounded-full shadow-2xl flex items-center gap-2 border border-blue-400/30 animate-bounce">
           <Sparkles className="w-4 h-4" />
           <span>{toast}</span>
         </div>
@@ -104,7 +105,7 @@ export function AdminDashboard({ onClose, onGrantFreeGift, userGram, onUpdateGra
 
       {/* Admin Header */}
       <header className="sticky top-0 z-30 bg-[#121215]/95 backdrop-blur-md border-b border-white/10 px-4 py-3">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
+        <div className="w-full mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               onClick={onClose}
@@ -459,6 +460,7 @@ export function AdminDashboard({ onClose, onGrantFreeGift, userGram, onUpdateGra
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

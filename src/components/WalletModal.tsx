@@ -172,7 +172,7 @@ export function WalletModal({ isOpen, onClose, userGram, onUpdateGram }: WalletM
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-            className="fixed bottom-0 left-0 right-0 h-auto max-h-[88vh] md:max-w-md md:mx-auto md:bottom-6 md:rounded-[28px] md:border md:border-[#2C2C2E] bg-[#121214] border-t border-[#2C2C2E] z-50 rounded-t-[28px] overflow-hidden flex flex-col shadow-[0_-20px_50px_rgba(0,0,0,0.8)]"
+            className="fixed bottom-0 left-0 right-0 h-auto max-h-[88vh] max-w-[480px] mx-auto sm:bottom-0 sm:border-x sm:border-[#2C2C2E] bg-[#121214] border-t border-[#2C2C2E] z-50 rounded-t-[28px] overflow-hidden flex flex-col shadow-[0_-20px_50px_rgba(0,0,0,0.8)]"
           >
             {/* Header Grab Bar & Close Button */}
             <div className="relative pt-2.5 pb-2 px-4 border-b border-white/10 flex items-center justify-between shrink-0 bg-[#18181B]">

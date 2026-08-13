@@ -149,10 +149,11 @@ export default function App() {
 
   return (
     <TonConnectUIProvider manifestUrl={manifestUrl}>
-      <div className="min-h-screen bg-[#080809] text-[#F5F5F7] font-sans selection:bg-[#0088CC]/30 overflow-x-hidden">
-        {/* Compact & Professional Fixed Header */}
-        <header className="fixed top-0 left-0 right-0 w-full z-40 bg-[#121214]/90 backdrop-blur-xl border-b border-[#2C2C2E]/60 pt-safe transition-all">
-          <div className="flex items-center justify-between px-4 h-14 max-w-5xl mx-auto">
+      <div className="min-h-screen bg-[#040405] text-[#F5F5F7] font-sans selection:bg-[#0088CC]/30 flex justify-center">
+        <div className="w-full max-w-[480px] min-h-screen bg-[#080809] relative shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-x-hidden sm:border-x border-[#2C2C2E]/40 flex flex-col">
+          {/* Compact & Professional Fixed Header */}
+          <header className="fixed top-0 left-0 right-0 w-full z-40 bg-[#121214]/90 backdrop-blur-xl border-b border-[#2C2C2E]/60 pt-safe transition-all max-w-[480px] mx-auto">
+            <div className="flex items-center justify-between px-3 h-14 w-full">
             <div className="flex items-center gap-2">
               <div className="w-9 h-9 rounded-xl bg-[#1C1C1E] border border-[#2C2C2E] flex items-center justify-center shadow-lg shrink-0 overflow-hidden">
                 <img src="https://i.suar.me/9zJ7w/l" alt="Logo" className="w-full h-full object-cover" />
@@ -185,7 +186,7 @@ export default function App() {
         </header>
 
         {/* Main Content */}
-        <main className="px-3 sm:px-6 md:px-8 pt-16 pb-28 max-w-5xl mx-auto">
+        <main className="px-4 pt-16 pb-28 w-full flex-1">
           {loading && activeTab === 'gifts' ? (
             <div className="flex justify-center items-center h-40">
               <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
@@ -195,7 +196,7 @@ export default function App() {
               {activeTab === 'gifts' && (
                 <div className="space-y-3 sm:space-y-4">
                   <ReferralBanner userId={userId} onOpenReferralHub={() => setActiveTab('referral')} />
-                  <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-4 md:gap-5">
+                  <div className="grid grid-cols-3 gap-2 sm:gap-3">
                     {gifts.map((gift) => (
                       <GiftCard key={gift.id} gift={gift} onClick={handleGiftClick} />
                     ))}
@@ -283,6 +284,7 @@ export default function App() {
           userGram={userGram}
           onUpdateGram={handleUpdateGram}
         />
+        </div>
       </div>
     </TonConnectUIProvider>
   );
