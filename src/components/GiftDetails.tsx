@@ -63,6 +63,7 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
   const isListed = gift.orderStatus === 'LISTED_ON_MRKT';
   const isAdminFreeMode = adminService.getAdminFreeMode();
   const isFixed = isOwned || !!gift.isMrktListing || !!gift.background || !!gift.modelUrl;
+  const isBear = gift.name === 'Champion Bear' || gift.id === 'gift-3';
 
   const handleListOnMarket = () => {
     const price = parseInt(sellPrice);
@@ -291,7 +292,7 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
           <img 
             src={gift.modelUrl || gift.image} 
             alt={gift.name} 
-            className="relative z-10 w-32 h-32 sm:w-36 sm:h-36 object-contain drop-shadow-2xl transition-all"
+            className={cn("relative z-10 w-32 h-32 sm:w-36 sm:h-36 object-contain drop-shadow-2xl transition-all", isBear && "scale-125 sm:scale-125")}
           />
         ) : (
           <AnimatePresence>
@@ -303,7 +304,7 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: -100, opacity: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="absolute z-10 w-32 h-32 sm:w-36 sm:h-36 object-contain drop-shadow-2xl" 
+              className={cn("absolute z-10 w-32 h-32 sm:w-36 sm:h-36 object-contain drop-shadow-2xl", isBear && "scale-125 sm:scale-125")} 
             />
           </AnimatePresence>
         )}
@@ -404,8 +405,8 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
             <div className="bg-[#252528] rounded-xl p-2.5 border border-[#3A3A3C]/70 flex items-center justify-between relative overflow-hidden">
               <div className="absolute top-0 right-0 w-16 h-16 bg-blue-500/10 rounded-full blur-xl pointer-events-none" />
               <div className="flex items-center gap-2.5 z-10 min-w-0">
-                <div className="w-7 h-7 rounded-lg bg-[#18181A] border border-[#3A3A3C] p-0.5 shrink-0 flex items-center justify-center">
-                  <img src={gift.modelUrl || gift.image} alt="model" className="w-full h-full object-contain" />
+                <div className="w-7 h-7 rounded-lg bg-[#18181A] border border-[#3A3A3C] p-0.5 shrink-0 flex items-center justify-center overflow-hidden">
+                  <img src={gift.modelUrl || gift.image} alt="model" className={cn("w-full h-full object-contain", isBear && "scale-125")} />
                 </div>
                 <div className="min-w-0">
                   <span className="text-[8px] text-[#8E8E93] font-bold uppercase flex items-center gap-1">

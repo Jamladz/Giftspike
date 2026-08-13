@@ -2,6 +2,7 @@ import React from 'react';
 import { Gift } from '../types';
 import { DynamicNumber } from './DynamicNumber';
 import { motion } from 'motion/react';
+import { cn } from '../lib/utils';
 
 interface GiftCardProps {
   gift: Gift;
@@ -10,6 +11,7 @@ interface GiftCardProps {
 
 export const GiftCard: React.FC<GiftCardProps> = ({ gift, onClick }) => {
   const isSoldOut = gift.status === 'SOLD_OUT';
+  const isBear = gift.name === 'Champion Bear' || gift.id === 'gift-3';
 
   return (
     <motion.button
@@ -34,7 +36,10 @@ export const GiftCard: React.FC<GiftCardProps> = ({ gift, onClick }) => {
         <img 
           src={gift.image} 
           alt={gift.name} 
-          className="w-full h-full object-contain group-hover:scale-108 transition-transform duration-500 ease-out drop-shadow-[0_8px_16px_rgba(0,0,0,0.6)] relative z-10 p-1"
+          className={cn(
+            "w-full h-full object-contain group-hover:scale-108 transition-transform duration-500 ease-out drop-shadow-[0_8px_16px_rgba(0,0,0,0.6)] relative z-10 p-1",
+            isBear && "scale-125 p-0"
+          )}
           loading="lazy"
         />
         {gift.status === 'LIMITED' && (

@@ -3,6 +3,7 @@ import { Gift } from '../types';
 import { DynamicNumber } from './DynamicNumber';
 import { CheckCircle2, X } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { cn } from '../lib/utils';
 
 interface PurchaseSuccessProps {
   gift: Gift;
@@ -39,7 +40,10 @@ export function PurchaseSuccess({ gift, orderId, background, onClose }: Purchase
           <img 
             src={gift.image} 
             alt={gift.name} 
-            className="relative z-10 w-28 h-28 object-contain drop-shadow-xl" 
+            className={cn(
+              "relative z-10 w-28 h-28 object-contain drop-shadow-xl",
+              (gift.name === 'Champion Bear' || gift.id === 'gift-3') && "scale-125"
+            )} 
           />
         </div>
         <motion.div 

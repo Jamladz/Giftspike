@@ -2,6 +2,7 @@ import React from 'react';
 import { DynamicNumber } from './DynamicNumber';
 import { User, Wallet, Sparkles, Gift as GiftIcon, ExternalLink, ArrowRight, ShieldCheck, Coins, Star, Key, Lock } from 'lucide-react';
 import WebApp from '@twa-dev/sdk';
+import { cn } from '../lib/utils';
 
 interface ProfileViewProps {
   myGifts: any[];
@@ -193,7 +194,10 @@ export function ProfileView({ myGifts, userId, userStars = 150, userGram = 0, on
                     <img 
                       src={gift.modelUrl || gift.image} 
                       alt={gift.name} 
-                      className="relative z-10 w-20 h-20 object-contain drop-shadow-xl group-hover:scale-105 transition-transform" 
+                      className={cn(
+                        "relative z-10 w-20 h-20 object-contain drop-shadow-xl group-hover:scale-105 transition-transform",
+                        (gift.name === 'Champion Bear' || gift.id === 'gift-3') && "scale-125"
+                      )} 
                     />
                     <span className="absolute top-1.5 right-1.5 z-20 text-[9px] font-black bg-black/60 backdrop-blur-md text-amber-400 px-1.5 py-0.5 rounded-md border border-white/10 font-mono">
                       #{gift.serialNumber || '258'}

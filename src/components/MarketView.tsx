@@ -954,7 +954,10 @@ export function MarketView({ onSelectGift, purchasedGiftIds }: MarketViewProps) 
                       <img
                         src={item.modelUrl}
                         alt={item.name}
-                        className="relative z-10 w-10 h-10 object-contain drop-shadow group-hover:scale-105 transition-transform"
+                        className={cn(
+                          "relative z-10 w-10 h-10 object-contain drop-shadow group-hover:scale-105 transition-transform",
+                          (item.name === 'Champion Bear' || item.id === 'gift-3') && "scale-125"
+                        )}
                       />
                       <span className="absolute top-0.5 right-0.5 text-[8px] font-black bg-black/80 text-amber-400 px-1 rounded font-mono z-20">
                         #{item.serialNumber}
@@ -1041,7 +1044,10 @@ export function MarketView({ onSelectGift, purchasedGiftIds }: MarketViewProps) 
                   <img
                     src={item.modelUrl}
                     alt={item.name}
-                    className="relative z-10 w-20 h-20 object-contain drop-shadow-xl group-hover:scale-105 transition-transform"
+                    className={cn(
+                      "relative z-10 w-20 h-20 object-contain drop-shadow-xl group-hover:scale-105 transition-transform",
+                      (item.name === 'Champion Bear' || item.id === 'gift-3') && "scale-125"
+                    )}
                   />
 
                   {/* Serial Hashtag Badge */}
