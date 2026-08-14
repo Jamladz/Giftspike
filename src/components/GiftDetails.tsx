@@ -292,7 +292,7 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
           <img 
             src={gift.modelUrl || gift.image} 
             alt={gift.name} 
-            className={cn("relative z-10 w-32 h-32 sm:w-36 sm:h-36 object-contain drop-shadow-2xl transition-all", isBear && "scale-125 sm:scale-125")}
+            className={cn("relative z-10 w-32 h-32 sm:w-36 sm:h-36 object-contain drop-shadow-2xl transition-all", isBear && "scale-[1.55] sm:scale-[1.6]")}
           />
         ) : (
           <AnimatePresence>
@@ -304,7 +304,7 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: -100, opacity: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className={cn("absolute z-10 w-32 h-32 sm:w-36 sm:h-36 object-contain drop-shadow-2xl", isBear && "scale-125 sm:scale-125")} 
+              className={cn("absolute z-10 w-32 h-32 sm:w-36 sm:h-36 object-contain drop-shadow-2xl", isBear && "scale-[1.55] sm:scale-[1.6]")} 
             />
           </AnimatePresence>
         )}
@@ -406,7 +406,7 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
               <div className="absolute top-0 right-0 w-16 h-16 bg-blue-500/10 rounded-full blur-xl pointer-events-none" />
               <div className="flex items-center gap-2.5 z-10 min-w-0">
                 <div className="w-7 h-7 rounded-lg bg-[#18181A] border border-[#3A3A3C] p-0.5 shrink-0 flex items-center justify-center overflow-hidden">
-                  <img src={gift.modelUrl || gift.image} alt="model" className={cn("w-full h-full object-contain", isBear && "scale-125")} />
+                  <img src={gift.modelUrl || gift.image} alt="model" className={cn("w-full h-full object-contain", isBear && "scale-[1.4]")} />
                 </div>
                 <div className="min-w-0">
                   <span className="text-[8px] text-[#8E8E93] font-bold uppercase flex items-center gap-1">
@@ -623,10 +623,10 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
                   ) : (
                     <button
                       onClick={() => setIsSellingMode(true)}
-                      className="h-10 px-4 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-400 hover:bg-amber-500/30 text-xs font-bold transition-all flex items-center gap-2 shadow-lg"
+                      className="h-10 px-4 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-400 hover:bg-amber-500/30 text-xs font-bold transition-all flex items-center gap-2 shadow-lg cursor-pointer"
                     >
                       <Tag className="w-4 h-4" />
-                      <span>Sell</span>
+                      <span>Sell on MRKT</span>
                     </button>
                   )}
                 </div>

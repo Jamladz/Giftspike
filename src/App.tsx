@@ -20,25 +20,26 @@ import { referralService } from './lib/referral';
 import { adminService } from './lib/admin';
 import { api } from './lib/api';
 
+import { userService } from './lib/user';
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('gifts');
   const [gifts, setGifts] = useState<Gift[]>([]);
   const [myGifts, setMyGifts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [synced, setSynced] = useState(false);
   
-  const [userStars, setUserStars] = useState<number>(() => {
-    const saved = localStorage.getItem('user_stars');
-    return saved ? parseInt(saved, 10) : 150;
-  });
+  const [userStars, setUserStars] = useState<number>(150);
+  const [userGram, setUserGram] = useState<number>(0);
 
-  const [userGram, setUserGram] = useState<number>(() => {
-    const saved = localStorage.getItem('user_gram_balance');
-    return saved ? parseFloat(saved) : 0;
-  });
+  const tgUser = WebApp.initDataUnsafe?.user;
+  const userId = tgUser?.id?.toString() || 'test_user_id';
+  const userHandle = tgUser?.username || '';
+  const userName = tgUser?.first_name || 'Telegram User';
 
   const handleUpdateGram = (newBalance: number) => {
     setUserGram(newBalance);
-    localStorage.setItem('user_gram_balance', newBalance.toString());
+    userService.updateBalance(userId, { gramBalance: newBalance });
   };
 
   const [selectedGift, setSelectedGift] = useState<Gift | null>(null);
@@ -51,16 +52,10 @@ export default function App() {
   const handleEarnStars = (amount: number) => {
     setUserStars((prev) => {
       const next = prev + amount;
-      localStorage.setItem('user_stars', next.toString());
+      userService.updateBalance(userId, { starsBalance: next });
       return next;
     });
   };
-
-  // Use test user ID if not in Telegram environment
-  const tgUser = WebApp.initDataUnsafe?.user;
-  const userId = tgUser?.id?.toString() || 'test_user_id';
-  const userHandle = tgUser?.username || '';
-  const userName = tgUser?.first_name || 'Telegram User';
 
   useEffect(() => {
     // Initialize Telegram WebApp
@@ -90,10 +85,15 @@ export default function App() {
     });
     
     // Process referral on launch
-    const refResult = referralService.processReferralOnLaunch(userId, userName);
-    if (refResult.success && refResult.welcomeBonus > 0) {
-      handleEarnStars(refResult.welcomeBonus);
-    }
+    referralService.processReferralOnLaunch(userId, userName).then(refResult => {
+      userService.syncUser(userId, userName).then((balances) => {
+        if (balances) {
+          setUserGram(balances.gramBalance);
+          setUserStars(balances.starsBalance + (refResult.success ? refResult.welcomeBonus : 0));
+          setSynced(true);
+        }
+      });
+    });
 
     fetchGifts();
     fetchMyGifts();
@@ -233,6 +233,8 @@ export default function App() {
                 <MarketView 
                   onSelectGift={handleGiftClick} 
                   purchasedGiftIds={purchasedMarketGiftIds} 
+                  storeGifts={gifts}
+                  onGoToGifts={() => setActiveTab('gifts')}
                 />
               )}
 

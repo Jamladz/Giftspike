@@ -16,7 +16,9 @@ import {
   Zap,
   Layers,
   Flame,
-  RefreshCw
+  RefreshCw,
+  ShoppingBag,
+  Lock
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -24,6 +26,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface MarketViewProps {
   onSelectGift: (gift: Gift) => void;
   purchasedGiftIds?: string[];
+  storeGifts?: Gift[];
+  onGoToGifts?: () => void;
 }
 
 // Authentic Telegram Username Pools (Arab, Western, Russian in English)
@@ -104,16 +108,22 @@ function calculateItemPrice(model: typeof ALL_MODELS[0], bg: typeof BACKGROUND_O
 
   // Add subtle realistic market variance (-12% to +15%)
   const variance = 0.88 + Math.random() * 0.27;
-  return Math.max(18, Math.round(price * variance));
+  const minFloor = model.giftName === 'Champion Bear' ? 4 : model.giftName === 'Cash Cannon' ? 8 : 15;
+  return Math.max(minFloor, Math.round(price * variance));
 }
 
-// Generate 320 Realistic Active Market Listings
-function generateActiveListings(count = 320) {
+const ALL_GIFT_NAMES = ['Tele GT', 'Cash Cannon', 'Champion Bear'];
+
+// Generate Realistic Active Market Listings
+function generateActiveListings(count = 360, availableGiftNames: string[] = ALL_GIFT_NAMES) {
   const items = [];
+  const validNames = availableGiftNames.length > 0 ? availableGiftNames : ALL_GIFT_NAMES;
   for (let i = 1; i <= count; i++) {
-    const giftName = 'Champion Bear';
+    const giftName = validNames[i % validNames.length] || 'Champion Bear';
     const availableModels = ALL_MODELS.filter(m => m.giftName === giftName);
-    const model = availableModels[Math.floor(Math.random() * availableModels.length)];
+    const model = availableModels.length > 0
+      ? availableModels[Math.floor(Math.random() * availableModels.length)]
+      : ALL_MODELS[0];
     const bg = BACKGROUND_OPTIONS[Math.floor(Math.random() * BACKGROUND_OPTIONS.length)];
     const seller = ALL_TELEGRAM_BOTS[Math.floor(Math.random() * ALL_TELEGRAM_BOTS.length)];
     
@@ -128,7 +138,7 @@ function generateActiveListings(count = 320) {
     const priceGram = calculateItemPrice(model, bg, serialNumber);
 
     items.push({
-      id: `mrkt-act-${i}`,
+      id: `mrkt-act-${i}-${Math.random().toString(36).substring(2, 6)}`,
       name: giftName,
       serialNumber,
       image: model.url,
@@ -140,7 +150,7 @@ function generateActiveListings(count = 320) {
       backgroundRarity: bg.rarity,
       priceGram,
       seller,
-      totalSupply: 300000,
+      totalSupply: giftName === 'Champion Bear' ? 300000 : giftName === 'Tele GT' ? 1000 : 2000,
       remainingSupply: 1,
       status: 'AVAILABLE' as const,
       createdAt: new Date().toISOString(),
@@ -150,13 +160,16 @@ function generateActiveListings(count = 320) {
   return items;
 }
 
-// Generate 160 Realistic Sold Market Listings with Timestamps
-function generateSoldListings(count = 160) {
+// Generate Realistic Sold Market Listings with Timestamps
+function generateSoldListings(count = 180, availableGiftNames: string[] = ALL_GIFT_NAMES) {
   const items = [];
+  const validNames = availableGiftNames.length > 0 ? availableGiftNames : ALL_GIFT_NAMES;
   for (let i = 1; i <= count; i++) {
-    const giftName = 'Champion Bear';
+    const giftName = validNames[i % validNames.length] || 'Champion Bear';
     const availableModels = ALL_MODELS.filter(m => m.giftName === giftName);
-    const model = availableModels[Math.floor(Math.random() * availableModels.length)];
+    const model = availableModels.length > 0
+      ? availableModels[Math.floor(Math.random() * availableModels.length)]
+      : ALL_MODELS[0];
     const bg = BACKGROUND_OPTIONS[Math.floor(Math.random() * BACKGROUND_OPTIONS.length)];
     
     let seller = ALL_TELEGRAM_BOTS[Math.floor(Math.random() * ALL_TELEGRAM_BOTS.length)];
@@ -173,9 +186,9 @@ function generateSoldListings(count = 160) {
     if (i <= 4) {
       soldAt = REALISTIC_SOLD_TIMES[i - 1]; // Just now, 1m, 2m, 3m
     } else if (i <= 20) {
-      soldAt = REALISTIC_SOLD_TIMES[4 + Math.floor((i - 4) % 6)]; // 4m to 18m (includes 15m)
+      soldAt = REALISTIC_SOLD_TIMES[4 + Math.floor((i - 4) % 6)]; // 4m to 18m
     } else if (i <= 50) {
-      soldAt = REALISTIC_SOLD_TIMES[10 + Math.floor((i - 20) % 8)]; // 22m to 1h 15m (includes 1h)
+      soldAt = REALISTIC_SOLD_TIMES[10 + Math.floor((i - 20) % 8)]; // 22m to 1h 15m
     } else if (i <= 100) {
       soldAt = REALISTIC_SOLD_TIMES[18 + Math.floor((i - 50) % 10)]; // 1h 30m to 5h
     } else {
@@ -183,7 +196,7 @@ function generateSoldListings(count = 160) {
     }
 
     items.push({
-      id: `mrkt-sold-${i}`,
+      id: `mrkt-sold-${i}-${Math.random().toString(36).substring(2, 6)}`,
       name: giftName,
       serialNumber,
       image: model.url,
@@ -197,7 +210,7 @@ function generateSoldListings(count = 160) {
       seller,
       buyer,
       soldAt,
-      totalSupply: 300000,
+      totalSupply: giftName === 'Champion Bear' ? 300000 : giftName === 'Tele GT' ? 1000 : 2000,
       remainingSupply: 0,
       status: 'SOLD_OUT' as const,
       createdAt: new Date().toISOString(),
@@ -207,7 +220,7 @@ function generateSoldListings(count = 160) {
   return items;
 }
 
-export function MarketView({ onSelectGift, purchasedGiftIds }: MarketViewProps) {
+export function MarketView({ onSelectGift, purchasedGiftIds, storeGifts, onGoToGifts }: MarketViewProps) {
   const [tab, setTab] = useState<'ACTIVE' | 'SOLD'>('ACTIVE');
 
   // Advanced Filter States
@@ -223,24 +236,24 @@ export function MarketView({ onSelectGift, purchasedGiftIds }: MarketViewProps) 
   // Pagination / Display Batch State
   const [displayLimit, setDisplayLimit] = useState(28);
 
-  // Active Market Listings State
+  // Active Market Listings State (includes all gifts: Tele GT, Cash Cannon, Champion Bear)
   const [activeMarketListings, setActiveMarketListings] = useState(() => {
     const saved = localStorage.getItem('market_active_listings');
     let parsed = saved ? JSON.parse(saved) : null;
-    if (parsed && !parsed.some((i: any) => i.name === 'Champion Bear')) {
-      parsed = null; // Force regenerate
+    if (parsed && (!parsed.some((i: any) => i.name === 'Tele GT') || !parsed.some((i: any) => i.name === 'Cash Cannon'))) {
+      parsed = null; // Re-seed with all gifts
     }
-    return parsed || generateActiveListings(320);
+    return parsed || generateActiveListings(360, ALL_GIFT_NAMES);
   });
 
-  // Sold Items History State
+  // Sold Items History State (includes all gifts: Tele GT, Cash Cannon, Champion Bear)
   const [soldMarketListings, setSoldMarketListings] = useState(() => {
     const saved = localStorage.getItem('market_sold_listings');
     let parsed = saved ? JSON.parse(saved) : null;
-    if (parsed && !parsed.some((i: any) => i.name === 'Champion Bear')) {
-      parsed = null; // Force regenerate
+    if (parsed && (!parsed.some((i: any) => i.name === 'Tele GT') || !parsed.some((i: any) => i.name === 'Cash Cannon'))) {
+      parsed = null; // Re-seed with all gifts
     }
-    return parsed || generateSoldListings(160);
+    return parsed || generateSoldListings(180, ALL_GIFT_NAMES);
   });
 
   // Live Trading Engine Stats
@@ -296,7 +309,7 @@ export function MarketView({ onSelectGift, purchasedGiftIds }: MarketViewProps) 
         if (boughtItems.length === 0) return prev;
 
         boughtItems.forEach(item => {
-          const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+          const tgUser = (window as any).Telegram?.WebApp?.initDataUnsafe?.user;
           const buyerName = tgUser?.first_name || tgUser?.username || 'You';
           const soldItem = {
             ...item,
@@ -420,10 +433,12 @@ export function MarketView({ onSelectGift, purchasedGiftIds }: MarketViewProps) 
         });
 
       } else {
-        // --- 3. BOT MINTS A BRAND NEW GIFT LISTING ---
-        const giftName = 'Champion Bear';
+        // --- 3. BOT MINTS A BRAND NEW GIFT LISTING ACROSS ALL GIFTS ---
+        const giftName = ALL_GIFT_NAMES[Math.floor(Math.random() * ALL_GIFT_NAMES.length)];
         const matchingModels = ALL_MODELS.filter(m => m.giftName === giftName);
-        const randomModel = matchingModels[Math.floor(Math.random() * matchingModels.length)];
+        const randomModel = matchingModels.length > 0
+          ? matchingModels[Math.floor(Math.random() * matchingModels.length)]
+          : ALL_MODELS[0];
         const randomBg = BACKGROUND_OPTIONS[Math.floor(Math.random() * BACKGROUND_OPTIONS.length)];
         const seller = ALL_TELEGRAM_BOTS[Math.floor(Math.random() * ALL_TELEGRAM_BOTS.length)];
         const serialNumber = Math.floor(Math.random() * 950) + 1;
@@ -442,7 +457,7 @@ export function MarketView({ onSelectGift, purchasedGiftIds }: MarketViewProps) 
           backgroundRarity: randomBg.rarity,
           priceGram,
           seller,
-          totalSupply: 300000,
+          totalSupply: giftName === 'Champion Bear' ? 300000 : giftName === 'Tele GT' ? 1000 : 2000,
           remainingSupply: 1,
           status: 'AVAILABLE' as const,
           createdAt: new Date().toISOString(),
@@ -682,25 +697,32 @@ export function MarketView({ onSelectGift, purchasedGiftIds }: MarketViewProps) 
                     <span>All Gifts</span>
                     {selectedGiftName === 'ALL' && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
                   </button>
-                  {['Tele GT', 'Cash Cannon', 'Champion Bear'].map((name) => (
-                    <button
-                      key={name}
-                      onClick={() => {
-                        setSelectedGiftName(name);
-                        setSelectedModel('ALL');
-                        setActiveDropdown('NONE');
-                      }}
-                      className={cn(
-                        'w-full text-left px-2 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-between',
-                        selectedGiftName === name
-                          ? 'bg-[#0088CC] text-white'
-                          : 'text-[#A1A1AA] hover:bg-[#2A2A2E] hover:text-white'
-                      )}
-                    >
-                      <span>{name}</span>
-                      {selectedGiftName === name && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
-                    </button>
-                  ))}
+                  {['Tele GT', 'Cash Cannon', 'Champion Bear'].map((name) => {
+                    return (
+                      <button
+                        key={name}
+                        onClick={() => {
+                          setSelectedGiftName(name);
+                          setSelectedModel('ALL');
+                          setActiveDropdown('NONE');
+                        }}
+                        className={cn(
+                          'w-full text-left px-2 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-between',
+                          selectedGiftName === name
+                            ? 'bg-[#0088CC] text-white'
+                            : 'text-[#A1A1AA] hover:bg-[#2A2A2E] hover:text-white'
+                        )}
+                      >
+                        <div className="flex items-center gap-1.5 truncate min-w-0 pr-1">
+                          <span className="truncate">{name}</span>
+                          <span className="text-[9px] text-[#8E8E93] font-mono shrink-0">
+                            ({activeMarketListings.filter(item => item.name === name).length})
+                          </span>
+                        </div>
+                        {selectedGiftName === name && <CheckCircle2 className="w-3.5 h-3.5 text-white shrink-0" />}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -956,7 +978,7 @@ export function MarketView({ onSelectGift, purchasedGiftIds }: MarketViewProps) 
                         alt={item.name}
                         className={cn(
                           "relative z-10 w-10 h-10 object-contain drop-shadow group-hover:scale-105 transition-transform",
-                          (item.name === 'Champion Bear' || item.id === 'gift-3') && "scale-125"
+                          (item.name === 'Champion Bear' || item.id === 'gift-3') && "scale-[1.45]"
                         )}
                       />
                       <span className="absolute top-0.5 right-0.5 text-[8px] font-black bg-black/80 text-amber-400 px-1 rounded font-mono z-20">
@@ -1046,7 +1068,7 @@ export function MarketView({ onSelectGift, purchasedGiftIds }: MarketViewProps) 
                     alt={item.name}
                     className={cn(
                       "relative z-10 w-20 h-20 object-contain drop-shadow-xl group-hover:scale-105 transition-transform",
-                      (item.name === 'Champion Bear' || item.id === 'gift-3') && "scale-125"
+                      (item.name === 'Champion Bear' || item.id === 'gift-3') && "scale-[1.45]"
                     )}
                   />
 

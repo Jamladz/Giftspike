@@ -5,7 +5,7 @@ const INITIAL_GIFTS: Gift[] = [
     id: 'gift-1', 
     name: 'Tele GT', 
     image: 'https://i.suar.me/ogamY/l', 
-    priceGram: 25, 
+    priceGram: 9, 
     totalSupply: 1000, 
     remainingSupply: 742, 
     status: 'AVAILABLE', 
@@ -15,9 +15,9 @@ const INITIAL_GIFTS: Gift[] = [
     id: 'gift-2', 
     name: 'Cash Cannon', 
     image: 'https://i.suar.me/6z9Ka/l', 
-    priceGram: 50, 
-    totalSupply: 500, 
-    remainingSupply: 312, 
+    priceGram: 4.5, 
+    totalSupply: 2000, 
+    remainingSupply: 1450, 
     status: 'AVAILABLE', 
     createdAt: new Date().toISOString() 
   },
@@ -91,9 +91,17 @@ export const api = {
       let updated = false;
 
       const formattedGifts = parsedGifts.map((g: any) => {
-        if (g.id === 'gift-1' && g.name !== 'Tele GT') {
-          updated = true;
-          return { ...g, name: 'Tele GT' };
+        if (g.id === 'gift-1') {
+          if (g.priceGram !== 9 || g.name !== 'Tele GT') updated = true;
+          return { ...g, name: 'Tele GT', priceGram: 9 };
+        }
+        if (g.id === 'gift-2') {
+          if (g.priceGram !== 4.5 || g.totalSupply !== 2000) updated = true;
+          return { ...g, name: 'Cash Cannon', priceGram: 4.5, totalSupply: 2000 };
+        }
+        if (g.id === 'gift-3') {
+          if (g.totalSupply !== 300000 || g.status !== 'SOLD_OUT') updated = true;
+          return { ...g, name: 'Champion Bear', totalSupply: 300000, remainingSupply: 0, status: 'SOLD_OUT' };
         }
         return g;
       });

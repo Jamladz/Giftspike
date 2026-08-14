@@ -16,8 +16,8 @@ interface ReferralHubProps {
 export function ReferralHub({ userId, userStars, onEarnStars }: ReferralHubProps) {
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<'invite' | 'milestones' | 'friends' | 'leaderboard'>('invite');
-  const [stats, setStats] = useState(() => referralService.getUserReferralStats(userId));
-  const [friends, setFriends] = useState<ReferralRecord[]>(() => referralService.getReferredFriends(userId));
+  const [stats, setStats] = useState({ referralsCount: 0, earnedCoins: 0, claimedMilestones: [] as string[], referredBy: null as string | null });
+  const [friends, setFriends] = useState<ReferralRecord[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>([]);
 
   // Weekly Countdown state
@@ -27,11 +27,19 @@ export function ReferralHub({ userId, userStars, onEarnStars }: ReferralHubProps
   const referralLink = referralService.getReferralLink(userId);
 
   useEffect(() => {
-    // Refresh stats and friends list
-    const currentStats = referralService.getUserReferralStats(userId);
-    setStats(currentStats);
-    setFriends(referralService.getReferredFriends(userId));
-    setLeaderboard(referralService.getWeeklyLeaderboard(userId, currentUserName));
+    // Refresh stats and friends list async
+    const loadData = async () => {
+      const currentStats = await referralService.getUserReferralStats(userId);
+      setStats(currentStats);
+      
+      const friendsList = await referralService.getReferredFriends(userId);
+      setFriends(friendsList);
+      
+      const board = await referralService.getWeeklyLeaderboard(userId, currentUserName);
+      setLeaderboard(board);
+    };
+    
+    loadData();
 
     // Weekly countdown logic to Sunday 23:59:59 UTC
     const updateCountdown = () => {
@@ -75,11 +83,12 @@ export function ReferralHub({ userId, userStars, onEarnStars }: ReferralHubProps
     }
   };
 
-  const handleClaimMilestone = (milestoneId: string) => {
-    const result = referralService.claimMilestone(userId, milestoneId);
+  const handleClaimMilestone = async (milestoneId: string) => {
+    const result = await referralService.claimMilestone(userId, milestoneId);
     if (result.success && result.rewardCoins > 0) {
       onEarnStars(result.rewardCoins);
-      setStats(referralService.getUserReferralStats(userId));
+      const newStats = await referralService.getUserReferralStats(userId);
+      setStats(newStats);
     }
   };
 

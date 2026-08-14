@@ -1,0 +1,31 @@
+{
+  "collections": [
+    {
+      "name": "users",
+      "documentId": "uid",
+      "fields": [
+        { "name": "uid", "type": "string", "description": "User ID" },
+        { "name": "displayName", "type": "string", "description": "User's display name" },
+        { "name": "photoURL", "type": "string", "description": "User's profile picture URL" },
+        { "name": "gramBalance", "type": "number", "description": "GRAM balance" },
+        { "name": "starsBalance", "type": "number", "description": "Stars balance" },
+        { "name": "referralsCount", "type": "number", "description": "Number of successful referrals" },
+        { "name": "referredBy", "type": "string", "description": "UID of the referrer (if any)" },
+        { "name": "earnedCoins", "type": "number", "description": "Coins earned through referrals" },
+        { "name": "claimedMilestones", "type": "array", "description": "Array of milestone IDs claimed" },
+        { "name": "createdAt", "type": "timestamp" }
+      ]
+    },
+    {
+      "name": "referrals",
+      "documentId": "auto-generated",
+      "fields": [
+        { "name": "referrerId", "type": "string", "description": "UID of the referrer" },
+        { "name": "referredUserId", "type": "string", "description": "UID of the new user" },
+        { "name": "referredUserName", "type": "string", "description": "Display name of the new user" },
+        { "name": "bonusEarned", "type": "number", "description": "Bonus given to the referrer" },
+        { "name": "createdAt", "type": "timestamp" }
+      ]
+    }
+  ]
+}

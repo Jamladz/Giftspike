@@ -458,6 +458,48 @@ export function AdminDashboard({ onClose, onGrantFreeGift, userGram, onUpdateGra
                 ))}
               </div>
             </div>
+
+            {/* Quick Admin Store Supply & MRKT Unlock Simulation */}
+            <div className="bg-[#161619] p-4 rounded-2xl border border-white/10 space-y-3">
+              <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
+                <GiftIcon className="w-4 h-4 text-purple-400" /> Store Supply & MRKT Unlock Simulation
+              </h4>
+              <p className="text-[11px] text-neutral-400">Instantly set store supply to 0 to unlock a gift in MRKT for trading:</p>
+
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => {
+                    const saved = localStorage.getItem('tg_gifts');
+                    if (saved) {
+                      const gifts = JSON.parse(saved);
+                      const updated = gifts.map((g: any) => g.id === 'gift-1' ? { ...g, remainingSupply: 0, status: 'SOLD_OUT' } : g);
+                      localStorage.setItem('tg_gifts', JSON.stringify(updated));
+                      showToast('🎉 Tele GT supply set to 0! Unlocked in MRKT!');
+                    }
+                  }}
+                  className="bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/40 p-2.5 rounded-xl text-xs font-bold text-purple-300 transition-all active:scale-95 cursor-pointer text-left"
+                >
+                  <div>Sell Out Tele GT</div>
+                  <div className="text-[9px] text-purple-400 font-normal mt-0.5">Unlock in MRKT</div>
+                </button>
+
+                <button
+                  onClick={() => {
+                    const saved = localStorage.getItem('tg_gifts');
+                    if (saved) {
+                      const gifts = JSON.parse(saved);
+                      const updated = gifts.map((g: any) => g.id === 'gift-2' ? { ...g, remainingSupply: 0, status: 'SOLD_OUT' } : g);
+                      localStorage.setItem('tg_gifts', JSON.stringify(updated));
+                      showToast('🎉 Cash Cannon supply set to 0! Unlocked in MRKT!');
+                    }
+                  }}
+                  className="bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/40 p-2.5 rounded-xl text-xs font-bold text-purple-300 transition-all active:scale-95 cursor-pointer text-left"
+                >
+                  <div>Sell Out Cash Cannon</div>
+                  <div className="text-[9px] text-purple-400 font-normal mt-0.5">Unlock in MRKT</div>
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

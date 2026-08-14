@@ -42,7 +42,7 @@ export function PurchaseSuccess({ gift, orderId, background, onClose }: Purchase
             alt={gift.name} 
             className={cn(
               "relative z-10 w-28 h-28 object-contain drop-shadow-xl",
-              (gift.name === 'Champion Bear' || gift.id === 'gift-3') && "scale-125"
+              (gift.name === 'Champion Bear' || gift.id === 'gift-3') && "scale-[1.5]"
             )} 
           />
         </div>

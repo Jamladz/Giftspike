@@ -38,7 +38,7 @@ export const GiftCard: React.FC<GiftCardProps> = ({ gift, onClick }) => {
           alt={gift.name} 
           className={cn(
             "w-full h-full object-contain group-hover:scale-108 transition-transform duration-500 ease-out drop-shadow-[0_8px_16px_rgba(0,0,0,0.6)] relative z-10 p-1",
-            isBear && "scale-125 p-0"
+            isBear && "scale-[1.5] p-0"
           )}
           loading="lazy"
         />
