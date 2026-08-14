@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { DynamicNumber } from './DynamicNumber';
 import { Gift } from '../types';
+import { api } from '../lib/api';
 import {
   Store,
   ArrowUpRight,
@@ -56,31 +57,31 @@ const ALL_TELEGRAM_BOTS = [
 ];
 
 const ALL_MODELS = [
-  { name: 'Golden Luxury', giftName: 'Tele GT', url: 'https://i.suar.me/ZzXKJ/l', rarity: '5%', basePrice: 160 },
-  { name: 'Stealth Black', giftName: 'Tele GT', url: 'https://i.suar.me/0poq0/l', rarity: '15%', basePrice: 85 },
-  { name: 'Cyber Green', giftName: 'Tele GT', url: 'https://i.suar.me/ApeYO/l', rarity: '20%', basePrice: 55 },
+  { name: 'Golden Luxury', giftName: 'Tele GT', url: 'https://i.suar.me/ZzXKJ/l', rarity: '5%', basePrice: 200 },
+  { name: 'Stealth Black', giftName: 'Tele GT', url: 'https://i.suar.me/0poq0/l', rarity: '15%', basePrice: 100 },
+  { name: 'Cyber Green', giftName: 'Tele GT', url: 'https://i.suar.me/ApeYO/l', rarity: '20%', basePrice: 60 },
   { name: 'Neon Pink', giftName: 'Tele GT', url: 'https://i.suar.me/Gn3GN/l', rarity: '25%', basePrice: 40 },
-  { name: 'Classic Blue', giftName: 'Tele GT', url: 'https://i.suar.me/ogamY/l', rarity: '35%', basePrice: 28 },
-  { name: 'Diamond Cannon', giftName: 'Cash Cannon', url: 'https://i.suar.me/WPBxr/l', rarity: '5%', basePrice: 210 },
-  { name: 'Cyber Blaster', giftName: 'Cash Cannon', url: 'https://i.suar.me/PpMOQ/l', rarity: '15%', basePrice: 110 },
-  { name: 'Ruby Launcher', giftName: 'Cash Cannon', url: 'https://i.suar.me/EpjKx/l', rarity: '20%', basePrice: 70 },
-  { name: 'Neon Cash', giftName: 'Cash Cannon', url: 'https://i.suar.me/vAdEW/l', rarity: '25%', basePrice: 50 },
-  { name: 'Gold Standard', giftName: 'Cash Cannon', url: 'https://i.suar.me/6z9Ka/l', rarity: '35%', basePrice: 32 },
+  { name: 'Classic Blue', giftName: 'Tele GT', url: 'https://i.suar.me/ogamY/l', rarity: '35%', basePrice: 30 },
+  { name: 'Diamond Cannon', giftName: 'Cash Cannon', url: 'https://i.suar.me/WPBxr/l', rarity: '5%', basePrice: 100 },
+  { name: 'Cyber Blaster', giftName: 'Cash Cannon', url: 'https://i.suar.me/PpMOQ/l', rarity: '15%', basePrice: 50 },
+  { name: 'Ruby Launcher', giftName: 'Cash Cannon', url: 'https://i.suar.me/EpjKx/l', rarity: '20%', basePrice: 30 },
+  { name: 'Neon Cash', giftName: 'Cash Cannon', url: 'https://i.suar.me/vAdEW/l', rarity: '25%', basePrice: 20 },
+  { name: 'Gold Standard', giftName: 'Cash Cannon', url: 'https://i.suar.me/6z9Ka/l', rarity: '35%', basePrice: 15 },
   { name: 'Argentina', giftName: 'Champion Bear', url: 'https://i.suar.me/Npgv0/l', rarity: '20%', basePrice: 10 },
   { name: 'Spain', giftName: 'Champion Bear', url: 'https://i.suar.me/lZBEl/l', rarity: '20%', basePrice: 8 },
-  { name: 'Brazil', giftName: 'Champion Bear', url: 'https://i.suar.me/Op9jM/l', rarity: '20%', basePrice: 8 },
-  { name: 'England', giftName: 'Champion Bear', url: 'https://i.suar.me/e9BpG/l', rarity: '20%', basePrice: 7 },
-  { name: 'Norway', giftName: 'Champion Bear', url: 'https://i.suar.me/qvlEx/l', rarity: '20%', basePrice: 5 },
+  { name: 'Brazil', giftName: 'Champion Bear', url: 'https://i.suar.me/Op9jM/l', rarity: '20%', basePrice: 5 },
+  { name: 'England', giftName: 'Champion Bear', url: 'https://i.suar.me/e9BpG/l', rarity: '20%', basePrice: 3 },
+  { name: 'Norway', giftName: 'Champion Bear', url: 'https://i.suar.me/qvlEx/l', rarity: '20%', basePrice: 2 },
 ];
 
 const BACKGROUND_OPTIONS = [
-  { name: 'Gold', hex: '#E2B857', border: '#FACC15', rarity: '2%', bonus: 75, url: 'https://i.suar.me/V9BKK/l' },
-  { name: 'Black', hex: '#18181B', border: '#52525B', rarity: '5%', bonus: 40, url: 'https://i.suar.me/Lpozo/l' },
-  { name: 'Red', hex: '#EF4444', border: '#F87171', rarity: '8%', bonus: 25, url: 'https://i.suar.me/MpVKv/l' },
-  { name: 'Burgundy', hex: '#881337', border: '#BE123C', rarity: '15%', bonus: 15, url: 'https://i.suar.me/2zOW9/l' },
-  { name: 'Green', hex: '#22C55E', border: '#4ADE80', rarity: '15%', bonus: 12, url: 'https://i.suar.me/8zo1y/l' },
-  { name: 'Purple', hex: '#A855F7', border: '#C084FC', rarity: '15%', bonus: 10, url: 'https://i.suar.me/9zJo7/l' },
-  { name: 'Cyan', hex: '#06B6D4', border: '#22D3EE', rarity: '15%', bonus: 10, url: 'https://i.suar.me/YQBX9/l' },
+  { name: 'Gold', hex: '#E2B857', border: '#FACC15', rarity: '2%', bonus: 40, url: 'https://i.suar.me/V9BKK/l' },
+  { name: 'Black', hex: '#18181B', border: '#52525B', rarity: '5%', bonus: 20, url: 'https://i.suar.me/Lpozo/l' },
+  { name: 'Red', hex: '#EF4444', border: '#F87171', rarity: '8%', bonus: 10, url: 'https://i.suar.me/MpVKv/l' },
+  { name: 'Burgundy', hex: '#881337', border: '#BE123C', rarity: '15%', bonus: 5, url: 'https://i.suar.me/2zOW9/l' },
+  { name: 'Green', hex: '#22C55E', border: '#4ADE80', rarity: '15%', bonus: 3, url: 'https://i.suar.me/8zo1y/l' },
+  { name: 'Purple', hex: '#A855F7', border: '#C084FC', rarity: '15%', bonus: 2, url: 'https://i.suar.me/9zJo7/l' },
+  { name: 'Cyan', hex: '#06B6D4', border: '#22D3EE', rarity: '15%', bonus: 1, url: 'https://i.suar.me/YQBX9/l' },
   { name: 'Orange', hex: '#F97316', border: '#FB923C', rarity: '25%', bonus: 0, url: 'https://i.suar.me/g46m5/l' },
 ];
 
@@ -256,17 +257,47 @@ export function MarketView({ onSelectGift, purchasedGiftIds, storeGifts, onGoToG
     return parsed || generateSoldListings(180, ALL_GIFT_NAMES);
   });
 
-  // Live Trading Engine Stats
-  const [tradeVolume, setTradeVolume] = useState(() => {
-    const saved = localStorage.getItem('market_trade_volume');
-    return saved ? parseInt(saved, 10) : 48920;
+  // Live Trading Engine Stats - Rolling 24h System
+  const [recentTrades, setRecentTrades] = useState<{ts: number, amount: number}[]>(() => {
+    const saved = localStorage.getItem('market_recent_trades');
+    if (saved) return JSON.parse(saved);
+    
+    const seed = [];
+    const now = Date.now();
+    const dayMs = 24 * 60 * 60 * 1000;
+    let currentVol = 0;
+    for (let i = 0; i < 200; i++) {
+       const amount = Math.floor(Math.random() * 35) + 2; 
+       if (currentVol + amount > 4100) break;
+       const timeOffset = Math.pow(Math.random(), 1.5) * dayMs; 
+       seed.push({ ts: now - timeOffset, amount });
+       currentVol += amount;
+    }
+    return seed;
   });
-  
-  const [tradeCount, setTradeCount] = useState(() => {
-    const saved = localStorage.getItem('market_trade_count');
-    return saved ? parseInt(saved, 10) : 1284;
-  });
-  
+
+  const recentTradesRef = useRef(recentTrades);
+  useEffect(() => {
+    recentTradesRef.current = recentTrades;
+    localStorage.setItem('market_recent_trades', JSON.stringify(recentTrades));
+  }, [recentTrades]);
+
+  // Rolling 24h Cleanup Interval
+  useEffect(() => {
+    const cleanup = setInterval(() => {
+       const now = Date.now();
+       const dayMs = 24 * 60 * 60 * 1000;
+       setRecentTrades(prev => {
+          const filtered = prev.filter(t => (now - t.ts) < dayMs);
+          return filtered.length === prev.length ? prev : filtered;
+       });
+    }, 15000);
+    return () => clearInterval(cleanup);
+  }, []);
+
+  const tradeVolume = useMemo(() => recentTrades.reduce((sum, t) => sum + t.amount, 0), [recentTrades]);
+  const tradeCount = recentTrades.length;
+
   const [latestTradeNotification, setLatestTradeNotification] = useState<{
     type: 'SALE' | 'LISTING';
     text: string;
@@ -291,14 +322,25 @@ export function MarketView({ onSelectGift, purchasedGiftIds, storeGifts, onGoToG
     return saved ? JSON.parse(saved) : [];
   })());
 
+  // Fetch real user listings from Firebase
+  useEffect(() => {
+    api.getMarketListings().then(listings => {
+      if (listings && listings.length > 0) {
+        setActiveMarketListings(prev => {
+          const newIds = new Set(listings.map((l: any) => l.id));
+          const filtered = prev.filter(p => !newIds.has(p.id));
+          return [...listings, ...filtered];
+        });
+      }
+    });
+  }, []);
+
   // Save Market State to LocalStorage whenever it changes
   useEffect(() => {
     localStorage.setItem('market_active_listings', JSON.stringify(activeMarketListings));
     localStorage.setItem('market_sold_listings', JSON.stringify(soldMarketListings));
-    localStorage.setItem('market_trade_volume', tradeVolume.toString());
-    localStorage.setItem('market_trade_count', tradeCount.toString());
     localStorage.setItem('market_flippable_queue', JSON.stringify(flippableQueueRef.current));
-  }, [activeMarketListings, soldMarketListings, tradeVolume, tradeCount]);
+  }, [activeMarketListings, soldMarketListings]);
 
   // Remove user-purchased items from active listings and log in sold history
   useEffect(() => {
@@ -318,8 +360,12 @@ export function MarketView({ onSelectGift, purchasedGiftIds, storeGifts, onGoToG
             soldAt: 'Just now',
           };
           setSoldMarketListings(sPrev => [soldItem, ...sPrev]);
-          setTradeVolume(v => v + item.priceGram);
-          setTradeCount(c => c + 1);
+          setRecentTrades(tPrev => {
+            const now = Date.now();
+            const dayMs = 24 * 60 * 60 * 1000;
+            const filtered = tPrev.filter(t => (now - t.ts) < dayMs);
+            return [...filtered, { ts: now, amount: item.priceGram }];
+          });
         });
 
         return prev.filter(item => !purchasedSet.has(item.id));
@@ -349,6 +395,12 @@ export function MarketView({ onSelectGift, purchasedGiftIds, storeGifts, onGoToG
         const randomIndex = Math.floor(Math.random() * activeCount);
         const itemToBuy = activeMarketListings[randomIndex];
 
+        // Ensure bots only buy from other bots, not from real users
+        if (!ALL_TELEGRAM_BOTS.includes(itemToBuy.seller)) return;
+
+        const currentVol = recentTradesRef.current.reduce((sum, t) => sum + t.amount, 0);
+        if (currentVol + itemToBuy.priceGram > 4950) return; // Dynamically cap at 5000 
+
         let buyer = ALL_TELEGRAM_BOTS[Math.floor(Math.random() * ALL_TELEGRAM_BOTS.length)];
         while (buyer === itemToBuy.seller) {
           buyer = ALL_TELEGRAM_BOTS[Math.floor(Math.random() * ALL_TELEGRAM_BOTS.length)];
@@ -365,8 +417,12 @@ export function MarketView({ onSelectGift, purchasedGiftIds, storeGifts, onGoToG
         setActiveMarketListings(prev => prev.filter(item => item.id !== itemToBuy.id));
         // Move to sold history
         setSoldMarketListings(prev => [soldItem, ...prev]);
-        setTradeVolume(v => v + itemToBuy.priceGram);
-        setTradeCount(c => c + 1);
+        setRecentTrades(tPrev => {
+          const now = Date.now();
+          const dayMs = 24 * 60 * 60 * 1000;
+          const filtered = tPrev.filter(t => (now - t.ts) < dayMs);
+          return [...filtered, { ts: now, amount: itemToBuy.priceGram }];
+        });
 
         // Queue in flippable pool so a bot can relist it later at a higher price
         flippableQueueRef.current.push({

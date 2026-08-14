@@ -65,66 +65,67 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
   const isFixed = isOwned || !!gift.isMrktListing || !!gift.background || !!gift.modelUrl;
   const isBear = gift.name === 'Champion Bear' || gift.id === 'gift-3';
 
-  const handleListOnMarket = () => {
+  const handleListOnMarket = async () => {
     const price = parseInt(sellPrice);
-    if (!price || price <= 0) return;
+    if (!price || price <= 0 || !gift.orderId) return;
+    setPaymentState('PROCESSING');
 
-    // Add to market listings
-    const currentListings = JSON.parse(localStorage.getItem('market_active_listings') || '[]');
-    const newListing = {
-      id: `mrkt-usr-${Date.now()}`,
-      originalOrderId: gift.orderId,
-      name: gift.name,
-      serialNumber: gift.serialNumber || 258,
-      image: gift.modelUrl || gift.image,
-      modelUrl: gift.modelUrl,
-      modelName: gift.modelName,
-      modelRarity: gift.modelRarity,
-      background: gift.background,
-      backgroundName: gift.backgroundName,
-      backgroundRarity: gift.backgroundRarity,
-      priceGram: price,
-      seller: WebApp.initDataUnsafe?.user?.first_name || WebApp.initDataUnsafe?.user?.username || 'You',
-      totalSupply: gift.totalSupply,
-      remainingSupply: 1,
-    };
-    
-    localStorage.setItem('market_active_listings', JSON.stringify([newListing, ...currentListings]));
-    
-    // Update order status to hide it from Profile
-    const orders = JSON.parse(localStorage.getItem('tg_orders') || '[]');
-    const updatedOrders = orders.map((o: any) => {
-      if (o.id === gift.orderId) {
-        return { ...o, status: 'LISTED_ON_MRKT' };
-      }
-      return o;
-    });
-    localStorage.setItem('tg_orders', JSON.stringify(updatedOrders));
+    try {
+      const newListing = {
+        id: `mrkt-usr-${Date.now()}`,
+        originalOrderId: gift.orderId,
+        name: gift.name,
+        serialNumber: gift.serialNumber || 258,
+        image: gift.modelUrl || gift.image,
+        modelUrl: gift.modelUrl,
+        modelName: gift.modelName,
+        modelRarity: gift.modelRarity,
+        background: gift.background,
+        backgroundName: gift.backgroundName,
+        backgroundRarity: gift.backgroundRarity,
+        priceGram: price,
+        seller: WebApp.initDataUnsafe?.user?.first_name || WebApp.initDataUnsafe?.user?.username || 'You',
+        totalSupply: gift.totalSupply,
+        remainingSupply: 1,
+        isMrktListing: true
+      };
+      
+      await api.listOnMarket(gift.orderId, newListing);
+      
+      // Update local storage so MarketView sees it immediately
+      const currentListings = JSON.parse(localStorage.getItem('market_active_listings') || '[]');
+      localStorage.setItem('market_active_listings', JSON.stringify([newListing, ...currentListings]));
 
-    setPaymentState('SUCCESS');
-    setTimeout(() => {
-      if (onListed) {
-        onListed();
-      }
-    }, 1500);
+      setPaymentState('SUCCESS');
+      setTimeout(() => {
+        if (onListed) onListed();
+      }, 1000);
+    } catch (e) {
+      console.error('Failed to list on market:', e);
+      setPaymentState('INITIAL');
+    }
   };
 
-  const handleCancelSale = () => {
+  const handleCancelSale = async () => {
+    if (!gift.orderId) return;
+    
+    // We need to find the listingId
     const currentListings = JSON.parse(localStorage.getItem('market_active_listings') || '[]');
-    const updatedListings = currentListings.filter((l: any) => l.originalOrderId !== gift.orderId);
-    localStorage.setItem('market_active_listings', JSON.stringify(updatedListings));
-
-    const orders = JSON.parse(localStorage.getItem('tg_orders') || '[]');
-    const updatedOrders = orders.map((o: any) => {
-      if (o.id === gift.orderId) {
-        return { ...o, status: 'PAID' };
+    const listing = currentListings.find((l: any) => l.originalOrderId === gift.orderId);
+    
+    try {
+      if (listing) {
+        await api.cancelSale(gift.orderId, listing.id);
+        const updatedListings = currentListings.filter((l: any) => l.id !== listing.id);
+        localStorage.setItem('market_active_listings', JSON.stringify(updatedListings));
+      } else {
+        // Fallback if not found locally
+        await api.cancelSale(gift.orderId, 'unknown_id');
       }
-      return o;
-    });
-    localStorage.setItem('tg_orders', JSON.stringify(updatedOrders));
-
-    if (onListed) {
-      onListed();
+      
+      if (onListed) onListed();
+    } catch (e) {
+      console.error('Failed to cancel sale:', e);
     }
   };
 
@@ -200,7 +201,7 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
       if (isAdminFreeMode) {
         setPaymentState('PROCESSING');
         const randomBackground = gift.background || BACKGROUNDS[Math.floor(Math.random() * BACKGROUNDS.length)];
-        const orderData = await api.createOrder(userId || 'anonymous', gift.id, randomBackground);
+        const orderData = await api.createOrder(userId || 'anonymous', gift, randomBackground);
         
         // Auto verify for free admin testing
         await api.verifyOrder(orderData.orderId, 'admin_free_test_boc');
@@ -223,7 +224,7 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
       const randomBackground = gift.background || BACKGROUNDS[Math.floor(Math.random() * BACKGROUNDS.length)];
 
       // 1. Create order intent on backend
-      const orderData = await api.createOrder(userId || 'anonymous', gift.id, randomBackground);
+      const orderData = await api.createOrder(userId || 'anonymous', gift, randomBackground);
 
       setPaymentState('CONFIRMING');
 

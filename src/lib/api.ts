@@ -1,3 +1,6 @@
+import { db, auth } from './firebase';
+import { collection, doc, getDoc, getDocs, setDoc, updateDoc, runTransaction, query, where, orderBy, serverTimestamp } from 'firebase/firestore';
+import { signInAnonymously } from 'firebase/auth';
 import { Gift } from '../types';
 
 const INITIAL_GIFTS: Gift[] = [
@@ -78,79 +81,89 @@ function pickRandomTrait<T extends { weight: number }>(traits: T[]): T {
   return traits[0];
 }
 
-// Helper to simulate network delay
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const ensureAuth = async () => {
+  if (!auth.currentUser) {
+    await signInAnonymously(auth);
+  }
+};
 
 export const api = {
   getGifts: async (): Promise<Gift[]> => {
-    await delay(300);
-    const storedGifts = localStorage.getItem('tg_gifts');
-    if (storedGifts) {
-      const parsedGifts: Gift[] = JSON.parse(storedGifts);
-      const giftIds = new Set(parsedGifts.map((g: any) => g.id));
-      let updated = false;
-
-      const formattedGifts = parsedGifts.map((g: any) => {
-        if (g.id === 'gift-1') {
-          if (g.priceGram !== 9 || g.name !== 'Tele GT') updated = true;
-          return { ...g, name: 'Tele GT', priceGram: 9 };
-        }
-        if (g.id === 'gift-2') {
-          if (g.priceGram !== 4.5 || g.totalSupply !== 2000) updated = true;
-          return { ...g, name: 'Cash Cannon', priceGram: 4.5, totalSupply: 2000 };
-        }
-        if (g.id === 'gift-3') {
-          if (g.totalSupply !== 300000 || g.status !== 'SOLD_OUT') updated = true;
-          return { ...g, name: 'Champion Bear', totalSupply: 300000, remainingSupply: 0, status: 'SOLD_OUT' };
-        }
-        return g;
-      });
-
-      INITIAL_GIFTS.forEach(ig => {
-        if (!giftIds.has(ig.id)) {
-          formattedGifts.push(ig);
-          updated = true;
-        }
-      });
-
-      if (updated) {
-        localStorage.setItem('tg_gifts', JSON.stringify(formattedGifts));
+    try {
+      await ensureAuth();
+      const giftsSnap = await getDocs(collection(db, 'gifts'));
+      if (giftsSnap.empty) {
+        // Seed initial gifts
+        const batch: Promise<void>[] = [];
+        INITIAL_GIFTS.forEach(g => {
+          batch.push(setDoc(doc(db, 'gifts', g.id), g));
+        });
+        await Promise.all(batch);
+        return INITIAL_GIFTS;
       }
-      return formattedGifts;
+      return giftsSnap.docs.map(d => d.data() as Gift);
+    } catch (error) {
+      console.error("Firebase getGifts error", error);
+      return INITIAL_GIFTS; // fallback if failing
     }
-    localStorage.setItem('tg_gifts', JSON.stringify(INITIAL_GIFTS));
-    return INITIAL_GIFTS;
   },
 
-  createOrder: async (userId: string, giftId: string, _background?: string) => {
-    await delay(400);
-    const gifts = await api.getGifts();
-    let gift = gifts.find(g => g.id === giftId);
+  createOrder: async (userId: string, giftOrId: string | Gift, _background?: string) => {
+    await ensureAuth();
     
-    // Support market gifts which are not in the main gifts array
-    if (!gift && giftId.startsWith('mrkt-')) {
-      gift = {
-        id: giftId,
-        name: giftId.includes('2') ? 'Cash Cannon' : 'Tele GT',
-        priceGram: 25,
-        remainingSupply: 1,
-        totalSupply: 1000,
-        status: 'AVAILABLE'
-      } as any;
+    let gift: any = typeof giftOrId === 'string' ? undefined : giftOrId;
+    const giftId = typeof giftOrId === 'string' ? giftOrId : giftOrId.id;
+
+    if (!gift) {
+      const gifts = await api.getGifts();
+      gift = gifts.find(g => g.id === giftId);
+      
+      // Support market gifts which are not in the main gifts array
+      if (!gift && giftId.startsWith('mrkt-')) {
+        gift = {
+          id: giftId,
+          name: giftId.includes('2') ? 'Cash Cannon' : 'Tele GT',
+          priceGram: 25,
+          remainingSupply: 1,
+          totalSupply: 1000,
+          status: 'AVAILABLE'
+        } as any;
+      }
     }
     
     if (!gift) throw new Error('Gift not found');
     if (gift.remainingSupply <= 0) throw new Error('Sold out');
 
-    const selectedBg = pickRandomTrait(BACKGROUND_TRAITS);
-    let modelTraits = TELE_GT_MODELS;
-    if (gift.id === 'gift-2' || gift.name === 'Cash Cannon') {
-      modelTraits = CASH_CANNON_MODELS;
-    } else if (gift.id === 'gift-3' || gift.name === 'Champion Bear') {
-      modelTraits = CHAMPION_BEAR_MODELS;
+    // If it's a market gift with a preset background/model, use it directly
+    const isMrkt = gift.isMrktListing || giftId.startsWith('mrkt-');
+    
+    let selectedBg;
+    let selectedModel;
+    let serialNumber;
+
+    if (isMrkt && gift.modelUrl && gift.background) {
+       selectedBg = {
+         url: gift.background,
+         name: gift.backgroundName || 'Custom',
+         rarity: gift.backgroundRarity || 'Unknown',
+       };
+       selectedModel = {
+         url: gift.modelUrl,
+         name: gift.modelName || 'Custom',
+         rarity: gift.modelRarity || 'Unknown',
+       };
+       serialNumber = gift.serialNumber || Math.floor(Math.random() * 999);
+    } else {
+      selectedBg = pickRandomTrait(BACKGROUND_TRAITS);
+      let modelTraits = TELE_GT_MODELS;
+      if (gift.id === 'gift-2' || gift.name === 'Cash Cannon') {
+        modelTraits = CASH_CANNON_MODELS;
+      } else if (gift.id === 'gift-3' || gift.name === 'Champion Bear') {
+        modelTraits = CHAMPION_BEAR_MODELS;
+      }
+      selectedModel = pickRandomTrait(modelTraits);
+      serialNumber = (gift.totalSupply - gift.remainingSupply) + 1;
     }
-    const selectedModel = pickRandomTrait(modelTraits);
-    const serialNumber = (gift.totalSupply - gift.remainingSupply) + 1;
 
     const orderId = crypto.randomUUID();
     const newOrder = {
@@ -170,8 +183,7 @@ export const api = {
       createdAt: new Date().toISOString()
     };
 
-    const storedOrders = JSON.parse(localStorage.getItem('tg_orders') || '[]');
-    localStorage.setItem('tg_orders', JSON.stringify([...storedOrders, newOrder]));
+    await setDoc(doc(db, 'orders', orderId), newOrder);
 
     return {
       orderId,
@@ -188,77 +200,132 @@ export const api = {
   },
 
   verifyOrder: async (orderId: string, transactionHash: string) => {
-    await delay(800);
-    const orders = JSON.parse(localStorage.getItem('tg_orders') || '[]');
-    const orderIndex = orders.findIndex((o: any) => o.id === orderId);
-    if (orderIndex === -1) throw new Error('Order not found');
+    await ensureAuth();
+    
+    return await runTransaction(db, async (transaction) => {
+      const orderRef = doc(db, 'orders', orderId);
+      const orderSnap = await transaction.get(orderRef);
+      if (!orderSnap.exists()) throw new Error('Order not found');
+      
+      const order = orderSnap.data();
+      if (order.status === 'PAID') throw new Error('Order already paid');
 
-    const order = orders[orderIndex];
-    if (order.status === 'PAID') throw new Error('Order already paid');
+      const giftRef = doc(db, 'gifts', order.giftId);
+      const giftSnap = await transaction.get(giftRef);
+      
+      if (giftSnap.exists()) {
+        const gift = giftSnap.data();
+        if (gift.remainingSupply <= 0) {
+          throw new Error('Gift sold out before payment completion');
+        }
+        const newSupply = gift.remainingSupply - 1;
+        transaction.update(giftRef, {
+          remainingSupply: newSupply,
+          status: newSupply === 0 ? 'SOLD_OUT' : gift.status
+        });
+      }
 
-    const gifts = await api.getGifts();
-    const giftIndex = gifts.findIndex((g: any) => g.id === order.giftId);
-    const gift = gifts[giftIndex];
+      transaction.update(orderRef, {
+        status: 'PAID',
+        transactionHash
+      });
 
-    if (gift && gift.remainingSupply <= 0) {
-      throw new Error('Gift sold out before payment completion');
-    }
-
-    // Update order status
-    orders[orderIndex] = { ...order, status: 'PAID', transactionHash };
-    localStorage.setItem('tg_orders', JSON.stringify(orders));
-
-    // Decrement supply only for store gifts
-    if (giftIndex !== -1) {
-      const newSupply = gift.remainingSupply - 1;
-      gifts[giftIndex] = {
-        ...gift,
-        remainingSupply: newSupply,
-        status: newSupply === 0 ? 'SOLD_OUT' : gift.status
-      };
-      localStorage.setItem('tg_gifts', JSON.stringify(gifts));
-    }
-
-    return { success: true, orderId };
+      return { success: true, orderId };
+    });
   },
 
   getMyGifts: async (userId: string) => {
-    await delay(300);
-    const orders = JSON.parse(localStorage.getItem('tg_orders') || '[]');
-    const userOrders = orders.filter((o: any) => o.userId === (userId || 'anonymous') && (o.status === 'PAID' || o.status === 'LISTED_ON_MRKT'));
-    
-    const gifts = await api.getGifts();
-    
-    const myGifts = userOrders.map((order: any, idx: number) => {
-      const gift = gifts.find((g: any) => g.id === order.giftId);
-      let modelTraits = TELE_GT_MODELS;
-      if (order.giftId === 'gift-2' || (gift && gift.name === 'Cash Cannon')) {
-        modelTraits = CASH_CANNON_MODELS;
-      } else if (order.giftId === 'gift-3' || (gift && gift.name === 'Champion Bear')) {
-        modelTraits = CHAMPION_BEAR_MODELS;
-      }
+    try {
+      await ensureAuth();
+      const gifts = await api.getGifts();
+      
+      const q = query(collection(db, 'orders'), where('userId', '==', userId || 'anonymous'));
+      const querySnapshot = await getDocs(q);
+      
+      const userOrders = querySnapshot.docs
+        .map(d => d.data())
+        .filter(o => o.status === 'PAID' || o.status === 'LISTED_ON_MRKT');
 
-      // Fallback values for legacy test orders
-      const defaultBg = BACKGROUND_TRAITS[idx % BACKGROUND_TRAITS.length];
-      const defaultModel = modelTraits[idx % modelTraits.length];
-      const serialNumber = order.serialNumber || (gift ? gift.totalSupply - gift.remainingSupply - idx : 258);
+      const myGifts = userOrders.map((order: any, idx: number) => {
+        const gift = gifts.find((g: any) => g.id === order.giftId);
+        let modelTraits = TELE_GT_MODELS;
+        if (order.giftId === 'gift-2' || (gift && gift.name === 'Cash Cannon')) {
+          modelTraits = CASH_CANNON_MODELS;
+        } else if (order.giftId === 'gift-3' || (gift && gift.name === 'Champion Bear')) {
+          modelTraits = CHAMPION_BEAR_MODELS;
+        }
 
-      return {
-        ...gift,
-        orderId: order.id,
-        orderStatus: order.status,
-        serialNumber,
-        background: order.background || defaultBg.url,
-        backgroundName: order.backgroundName || defaultBg.name,
-        backgroundRarity: order.backgroundRarity || defaultBg.rarity,
-        modelUrl: order.modelUrl || defaultModel.url,
-        modelName: order.modelName || defaultModel.name,
-        modelRarity: order.modelRarity || defaultModel.rarity,
-        purchaseDate: order.createdAt
-      };
-    }).sort((a: any, b: any) => new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime());
+        const defaultBg = BACKGROUND_TRAITS[idx % BACKGROUND_TRAITS.length];
+        const defaultModel = modelTraits[idx % modelTraits.length];
+        const serialNumber = order.serialNumber || (gift ? gift.totalSupply - gift.remainingSupply - idx : 258);
 
-    return myGifts;
+        return {
+          ...gift,
+          orderId: order.id,
+          orderStatus: order.status,
+          serialNumber,
+          background: order.background || defaultBg.url,
+          backgroundName: order.backgroundName || defaultBg.name,
+          backgroundRarity: order.backgroundRarity || defaultBg.rarity,
+          modelUrl: order.modelUrl || defaultModel.url,
+          modelName: order.modelName || defaultModel.name,
+          modelRarity: order.modelRarity || defaultModel.rarity,
+          purchaseDate: order.createdAt
+        };
+      }).sort((a: any, b: any) => new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime());
+
+      return myGifts;
+    } catch (e) {
+      console.error(e);
+      return [];
+    }
+  },
+
+  listOnMarket: async (orderId: string, listingData: any) => {
+    await ensureAuth();
+    return await runTransaction(db, async (transaction) => {
+      const orderRef = doc(db, 'orders', orderId);
+      const orderSnap = await transaction.get(orderRef);
+      if (!orderSnap.exists()) throw new Error('Order not found');
+
+      // Update order status
+      transaction.update(orderRef, { status: 'LISTED_ON_MRKT' });
+
+      // Create market listing
+      const listingRef = doc(db, 'market_listings', listingData.id);
+      transaction.set(listingRef, {
+        ...listingData,
+        createdAt: serverTimestamp()
+      });
+
+      return { success: true };
+    });
+  },
+
+  cancelSale: async (orderId: string, listingId: string) => {
+    await ensureAuth();
+    return await runTransaction(db, async (transaction) => {
+      const orderRef = doc(db, 'orders', orderId);
+      const orderSnap = await transaction.get(orderRef);
+      if (!orderSnap.exists()) throw new Error('Order not found');
+
+      transaction.update(orderRef, { status: 'PAID' });
+      
+      const listingRef = doc(db, 'market_listings', listingId);
+      transaction.delete(listingRef);
+
+      return { success: true };
+    });
+  },
+
+  getMarketListings: async () => {
+    try {
+      const q = query(collection(db, 'market_listings'), orderBy('createdAt', 'desc'));
+      const snap = await getDocs(q);
+      return snap.docs.map(d => d.data());
+    } catch (e) {
+      console.error(e);
+      return [];
+    }
   }
 };
-
