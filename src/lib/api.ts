@@ -33,6 +33,17 @@ const INITIAL_GIFTS: Gift[] = [
     remainingSupply: 0, 
     status: 'SOLD_OUT', 
     createdAt: new Date().toISOString() 
+  },
+  { 
+    id: 'gift-4', 
+    name: 'Goal King', 
+    image: 'https://i.suar.me/Jpxl7/l', 
+    priceGram: 0,
+    priceStars: 12000,
+    totalSupply: 100000, 
+    remainingSupply: 72000, 
+    status: 'AVAILABLE', 
+    createdAt: new Date().toISOString() 
   }
 ];
 
@@ -69,6 +80,17 @@ const CHAMPION_BEAR_MODELS = [
   { name: 'Argentina', url: 'https://i.suar.me/Npgv0/l', rarity: '20%', weight: 20 },
   { name: 'England', url: 'https://i.suar.me/e9BpG/l', rarity: '20%', weight: 20 },
   { name: 'Norway', url: 'https://i.suar.me/qvlEx/l', rarity: '20%', weight: 20 },
+];
+
+const GOAL_KING_MODELS = [
+  { name: 'Cristiano Ronaldo Portugal', url: 'https://i.suar.me/Jpxl7/l', rarity: '15%', weight: 15 },
+  { name: 'Messi Argentina', url: 'https://i.suar.me/ApeyB/l', rarity: '15%', weight: 15 },
+  { name: 'Haaland Man City', url: 'https://i.suar.me/Gn32d/l', rarity: '15%', weight: 15 },
+  { name: 'Messi Barcelona', url: 'https://i.suar.me/ZzX9z/l', rarity: '15%', weight: 15 },
+  { name: 'Mbappe PSG', url: 'https://i.suar.me/0porv/l', rarity: '10%', weight: 10 },
+  { name: 'Haaland Norway', url: 'https://i.suar.me/4z5wA/l', rarity: '10%', weight: 10 },
+  { name: 'Mbappe France', url: 'https://i.suar.me/zXrP4/l', rarity: '10%', weight: 10 },
+  { name: 'Cristiano Real Madrid', url: 'https://i.suar.me/YQBgJ/l', rarity: '10%', weight: 10 },
 ];
 
 function pickRandomTrait<T extends { weight: number }>(traits: T[]): T {
@@ -160,6 +182,8 @@ export const api = {
         modelTraits = CASH_CANNON_MODELS;
       } else if (gift.id === 'gift-3' || gift.name === 'Champion Bear') {
         modelTraits = CHAMPION_BEAR_MODELS;
+      } else if (gift.id === 'gift-4' || gift.name === 'Goal King') {
+        modelTraits = GOAL_KING_MODELS;
       }
       selectedModel = pickRandomTrait(modelTraits);
       serialNumber = (gift.totalSupply - gift.remainingSupply) + 1;
@@ -170,7 +194,8 @@ export const api = {
       id: orderId,
       userId: userId || 'anonymous',
       giftId,
-      amountGram: gift.priceGram,
+      amountGram: gift.priceGram || 0,
+      amountStars: gift.priceStars || 0,
       receiverAddress: 'UQCTZAMbXoN5T43K9gJXH8GYWBmIstXrUrdoV9kv3btN1Ad3', // Mock Address
       background: selectedBg.url,
       backgroundName: selectedBg.name,
@@ -188,7 +213,8 @@ export const api = {
     return {
       orderId,
       receiverAddress: newOrder.receiverAddress,
-      amountGram: gift.priceGram,
+      amountGram: gift.priceGram || 0,
+      amountStars: gift.priceStars || 0,
       background: selectedBg.url,
       backgroundName: selectedBg.name,
       backgroundRarity: selectedBg.rarity,
@@ -253,6 +279,8 @@ export const api = {
           modelTraits = CASH_CANNON_MODELS;
         } else if (order.giftId === 'gift-3' || (gift && gift.name === 'Champion Bear')) {
           modelTraits = CHAMPION_BEAR_MODELS;
+        } else if (order.giftId === 'gift-4' || (gift && gift.name === 'Goal King')) {
+          modelTraits = GOAL_KING_MODELS;
         }
 
         const defaultBg = BACKGROUND_TRAITS[idx % BACKGROUND_TRAITS.length];

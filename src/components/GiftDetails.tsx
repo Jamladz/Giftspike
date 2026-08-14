@@ -63,7 +63,7 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
   const isListed = gift.orderStatus === 'LISTED_ON_MRKT';
   const isAdminFreeMode = adminService.getAdminFreeMode();
   const isFixed = isOwned || !!gift.isMrktListing || !!gift.background || !!gift.modelUrl;
-  const isBear = gift.name === 'Champion Bear' || gift.id === 'gift-3';
+  const isCharacterGift = gift.name === 'Champion Bear' || gift.id === 'gift-3' || gift.name === 'Goal King' || gift.id === 'gift-4';
 
   const handleListOnMarket = async () => {
     const price = parseInt(sellPrice);
@@ -159,6 +159,19 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
     ];
     modelNames = ['Argentina', 'Spain', 'Brazil', 'England', 'Norway'];
     modelRarities = ['20%', '20%', '20%', '20%', '20%'];
+  } else if (gift.name === 'Goal King' || gift.id === 'gift-4') {
+    models = [
+      'https://i.suar.me/Jpxl7/l',
+      'https://i.suar.me/ApeyB/l',
+      'https://i.suar.me/Gn32d/l',
+      'https://i.suar.me/ZzX9z/l',
+      'https://i.suar.me/0porv/l',
+      'https://i.suar.me/4z5wA/l',
+      'https://i.suar.me/zXrP4/l',
+      'https://i.suar.me/YQBgJ/l'
+    ];
+    modelNames = ['Cristiano Portugal', 'Messi Argentina', 'Haaland City', 'Messi Barcelona', 'Mbappe PSG', 'Haaland Norway', 'Mbappe France', 'Cristiano Madrid'];
+    modelRarities = ['15%', '15%', '15%', '15%', '10%', '10%', '10%', '10%'];
   }
 
   useEffect(() => {
@@ -205,6 +218,23 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
         
         // Auto verify for free admin testing
         await api.verifyOrder(orderData.orderId, 'admin_free_test_boc');
+        setPaymentState('SUCCESS');
+        setTimeout(() => {
+          onSuccess(orderData.orderId, randomBackground);
+        }, 1200);
+        return;
+      }
+
+      if (gift.priceStars && gift.priceStars > 0 && !isAdminFreeMode) {
+        setPaymentState('PROCESSING');
+        const randomBackground = gift.background || BACKGROUNDS[Math.floor(Math.random() * BACKGROUNDS.length)];
+        const orderData = await api.createOrder(userId || 'anonymous', gift, randomBackground);
+        
+        // Mocking Telegram Stars popup delay
+        await new Promise(r => setTimeout(r, 1500));
+        setPaymentState('VERIFYING');
+        await api.verifyOrder(orderData.orderId, 'stars_payment_' + Date.now());
+        
         setPaymentState('SUCCESS');
         setTimeout(() => {
           onSuccess(orderData.orderId, randomBackground);
@@ -293,7 +323,7 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
           <img 
             src={gift.modelUrl || gift.image} 
             alt={gift.name} 
-            className={cn("relative z-10 w-32 h-32 sm:w-36 sm:h-36 object-contain drop-shadow-2xl transition-all", isBear && "scale-[1.55] sm:scale-[1.6]")}
+            className={cn("relative z-10 w-32 h-32 sm:w-36 sm:h-36 object-contain drop-shadow-2xl transition-all", isCharacterGift && "scale-[1.8] sm:scale-[1.9]")}
           />
         ) : (
           <AnimatePresence>
@@ -305,7 +335,7 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: -100, opacity: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className={cn("absolute z-10 w-32 h-32 sm:w-36 sm:h-36 object-contain drop-shadow-2xl", isBear && "scale-[1.55] sm:scale-[1.6]")} 
+              className={cn("absolute z-10 w-32 h-32 sm:w-36 sm:h-36 object-contain drop-shadow-2xl", isCharacterGift && "scale-[1.8] sm:scale-[1.9]")} 
             />
           </AnimatePresence>
         )}
@@ -354,8 +384,12 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
           {/* Price & Seller Info */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1">
-              <DynamicNumber value={gift.priceGram} imageClassName="h-4" />
-              <img src="https://i.suar.me/zXrj0/l" alt="GRAM" className="w-4 h-4 rounded-full object-cover shrink-0 shadow-sm" />
+              <DynamicNumber value={gift.priceStars || gift.priceGram} imageClassName="h-4" />
+              {gift.priceStars ? (
+                <span className="text-[14px]">⭐️</span>
+              ) : (
+                <img src="https://i.suar.me/zXrj0/l" alt="GRAM" className="w-4 h-4 rounded-full object-cover shrink-0 shadow-sm" />
+              )}
             </div>
             {gift.seller && !isSoldDeal && (
               <span className="text-[11px] text-[#8E8E93]">
@@ -407,7 +441,7 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
               <div className="absolute top-0 right-0 w-16 h-16 bg-blue-500/10 rounded-full blur-xl pointer-events-none" />
               <div className="flex items-center gap-2.5 z-10 min-w-0">
                 <div className="w-7 h-7 rounded-lg bg-[#18181A] border border-[#3A3A3C] p-0.5 shrink-0 flex items-center justify-center overflow-hidden">
-                  <img src={gift.modelUrl || gift.image} alt="model" className={cn("w-full h-full object-contain", isBear && "scale-[1.4]")} />
+                  <img src={gift.modelUrl || gift.image} alt="model" className={cn("w-full h-full object-contain", isCharacterGift && "scale-[1.7]")} />
                 </div>
                 <div className="min-w-0">
                   <span className="text-[8px] text-[#8E8E93] font-bold uppercase flex items-center gap-1">
@@ -668,8 +702,12 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
                           <span className="font-extrabold tracking-tight">
                             {gift.isMrktListing ? 'Buy on MRKT for' : 'Buy for'}
                           </span>
-                          <DynamicNumber value={gift.priceGram} imageClassName="h-3.5" />
-                          <img src="https://i.suar.me/zXrj0/l" alt="GRAM" className="w-4 h-4 rounded-full object-cover shrink-0" />
+                          <DynamicNumber value={gift.priceStars || gift.priceGram} imageClassName="h-3.5" />
+                          {gift.priceStars ? (
+                            <span className="text-[14px]">⭐️</span>
+                          ) : (
+                            <img src="https://i.suar.me/zXrj0/l" alt="GRAM" className="w-4 h-4 rounded-full object-cover shrink-0" />
+                          )}
                         </>
                       )}
                     </>

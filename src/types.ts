@@ -3,6 +3,7 @@ export interface Gift {
   name: string;
   image: string;
   priceGram: number;
+  priceStars?: number;
   totalSupply: number;
   remainingSupply: number;
   status: 'AVAILABLE' | 'LIMITED' | 'SOLD_OUT';
@@ -26,6 +27,7 @@ export interface Order {
   userId: string;
   giftId: string;
   amountGram: number;
+  amountStars?: number;
   receiverAddress: string;
   background: string;
   backgroundName?: string;

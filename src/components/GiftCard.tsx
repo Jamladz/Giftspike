@@ -11,7 +11,7 @@ interface GiftCardProps {
 
 export const GiftCard: React.FC<GiftCardProps> = ({ gift, onClick }) => {
   const isSoldOut = gift.status === 'SOLD_OUT';
-  const isBear = gift.name === 'Champion Bear' || gift.id === 'gift-3';
+  const isCharacterGift = gift.name === 'Champion Bear' || gift.id === 'gift-3' || gift.name === 'Goal King' || gift.id === 'gift-4';
 
   return (
     <motion.button
@@ -38,7 +38,7 @@ export const GiftCard: React.FC<GiftCardProps> = ({ gift, onClick }) => {
           alt={gift.name} 
           className={cn(
             "w-full h-full object-contain group-hover:scale-108 transition-transform duration-500 ease-out drop-shadow-[0_8px_16px_rgba(0,0,0,0.6)] relative z-10 p-1",
-            isBear && "scale-[1.5] p-0"
+            isCharacterGift && "scale-[1.8] p-0"
           )}
           loading="lazy"
         />
@@ -56,8 +56,12 @@ export const GiftCard: React.FC<GiftCardProps> = ({ gift, onClick }) => {
         </h3>
         
         <div className="flex justify-center items-center gap-1.5 mb-2 sm:mb-2.5">
-          <DynamicNumber value={gift.priceGram} imageClassName="h-3.5 sm:h-4 font-black" />
-          <img src="https://i.suar.me/zXrj0/l" alt="GRAM" className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full object-cover shrink-0 shadow-sm" />
+          <DynamicNumber value={gift.priceStars || gift.priceGram} imageClassName="h-3.5 sm:h-4 font-black" />
+          {gift.priceStars ? (
+            <span className="text-[14px] sm:text-[16px]">⭐️</span>
+          ) : (
+            <img src="https://i.suar.me/zXrj0/l" alt="GRAM" className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full object-cover shrink-0 shadow-sm" />
+          )}
         </div>
         
         <div className="w-full bg-[#0D0D0F] h-1.5 rounded-full overflow-hidden border border-white/5 shadow-inner">

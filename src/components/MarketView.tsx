@@ -72,6 +72,14 @@ const ALL_MODELS = [
   { name: 'Brazil', giftName: 'Champion Bear', url: 'https://i.suar.me/Op9jM/l', rarity: '20%', basePrice: 5 },
   { name: 'England', giftName: 'Champion Bear', url: 'https://i.suar.me/e9BpG/l', rarity: '20%', basePrice: 3 },
   { name: 'Norway', giftName: 'Champion Bear', url: 'https://i.suar.me/qvlEx/l', rarity: '20%', basePrice: 2 },
+  { name: 'Cristiano Real Madrid', giftName: 'Goal King', url: 'https://i.suar.me/YQBgJ/l', rarity: '10%', basePrice: 110 },
+  { name: 'Mbappe France', giftName: 'Goal King', url: 'https://i.suar.me/zXrP4/l', rarity: '10%', basePrice: 85 },
+  { name: 'Mbappe PSG', giftName: 'Goal King', url: 'https://i.suar.me/0porv/l', rarity: '10%', basePrice: 60 },
+  { name: 'Haaland Norway', giftName: 'Goal King', url: 'https://i.suar.me/4z5wA/l', rarity: '10%', basePrice: 40 },
+  { name: 'Messi Barcelona', giftName: 'Goal King', url: 'https://i.suar.me/ZzX9z/l', rarity: '15%', basePrice: 20 },
+  { name: 'Haaland Man City', giftName: 'Goal King', url: 'https://i.suar.me/Gn32d/l', rarity: '15%', basePrice: 10 },
+  { name: 'Messi Argentina', giftName: 'Goal King', url: 'https://i.suar.me/ApeyB/l', rarity: '15%', basePrice: 6 },
+  { name: 'Cristiano Ronaldo Portugal', giftName: 'Goal King', url: 'https://i.suar.me/Jpxl7/l', rarity: '15%', basePrice: 4 },
 ];
 
 const BACKGROUND_OPTIONS = [
@@ -109,11 +117,11 @@ function calculateItemPrice(model: typeof ALL_MODELS[0], bg: typeof BACKGROUND_O
 
   // Add subtle realistic market variance (-12% to +15%)
   const variance = 0.88 + Math.random() * 0.27;
-  const minFloor = model.giftName === 'Champion Bear' ? 4 : model.giftName === 'Cash Cannon' ? 8 : 15;
+  const minFloor = model.giftName === 'Goal King' ? 4 : model.giftName === 'Champion Bear' ? 4 : model.giftName === 'Cash Cannon' ? 8 : 15;
   return Math.max(minFloor, Math.round(price * variance));
 }
 
-const ALL_GIFT_NAMES = ['Tele GT', 'Cash Cannon', 'Champion Bear'];
+const ALL_GIFT_NAMES = ['Tele GT', 'Cash Cannon', 'Champion Bear', 'Goal King'];
 
 // Generate Realistic Active Market Listings
 function generateActiveListings(count = 360, availableGiftNames: string[] = ALL_GIFT_NAMES) {
@@ -513,7 +521,7 @@ export function MarketView({ onSelectGift, purchasedGiftIds, storeGifts, onGoToG
           backgroundRarity: randomBg.rarity,
           priceGram,
           seller,
-          totalSupply: giftName === 'Champion Bear' ? 300000 : giftName === 'Tele GT' ? 1000 : 2000,
+          totalSupply: giftName === 'Goal King' ? 100000 : giftName === 'Champion Bear' ? 300000 : giftName === 'Tele GT' ? 1000 : 2000,
           remainingSupply: 1,
           status: 'AVAILABLE' as const,
           createdAt: new Date().toISOString(),
@@ -753,7 +761,7 @@ export function MarketView({ onSelectGift, purchasedGiftIds, storeGifts, onGoToG
                     <span>All Gifts</span>
                     {selectedGiftName === 'ALL' && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
                   </button>
-                  {['Tele GT', 'Cash Cannon', 'Champion Bear'].map((name) => {
+                  {ALL_GIFT_NAMES.map((name) => {
                     return (
                       <button
                         key={name}
