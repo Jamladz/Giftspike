@@ -162,7 +162,7 @@ function generateActiveListings(count = 360, availableGiftNames: string[] = ALL_
       totalSupply: giftName === 'Champion Bear' ? 300000 : giftName === 'Tele GT' ? 1000 : 2000,
       remainingSupply: 1,
       status: 'AVAILABLE' as const,
-      createdAt: new Date().toISOString(),
+      createdAt: new Date(Date.now() - i * 60000).toISOString(),
       isMrktListing: true,
     });
   }
@@ -554,14 +554,24 @@ export function MarketView({ onSelectGift, purchasedGiftIds, storeGifts, onGoToG
 
   // Filter Logic over all 300+ items
   const filteredListings = useMemo(() => {
-    return currentListings.filter((item) => {
+    const filtered = currentListings.filter((item) => {
       if (selectedGiftName !== 'ALL' && item.name !== selectedGiftName) return false;
       if (selectedModel !== 'ALL' && item.modelName !== selectedModel) return false;
       if (selectedBackground !== 'ALL' && item.backgroundName !== selectedBackground) return false;
       if (selectedHashtag !== 'ALL' && item.serialNumber !== selectedHashtag) return false;
       return true;
     });
-  }, [currentListings, selectedGiftName, selectedModel, selectedBackground, selectedHashtag]);
+
+    if (tab === 'ACTIVE') {
+      return filtered.sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA;
+      });
+    }
+
+    return filtered;
+  }, [currentListings, selectedGiftName, selectedModel, selectedBackground, selectedHashtag, tab]);
 
   const visibleListings = filteredListings.slice(0, displayLimit);
 

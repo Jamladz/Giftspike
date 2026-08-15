@@ -67,11 +67,11 @@ export const GiftCard: React.FC<GiftCardProps> = ({ gift, onClick }) => {
         <div className="w-full bg-[#0D0D0F] h-1.5 rounded-full overflow-hidden border border-white/5 shadow-inner">
           <div className="bg-gradient-to-r from-blue-500 to-cyan-400 h-full rounded-full transition-all duration-500" style={{ width: `${(gift.remainingSupply / gift.totalSupply) * 100}%` }}></div>
         </div>
-        <div className="flex items-center justify-center gap-1 text-[9px] sm:text-[10.5px] text-[#8E8E93] mt-1.5 font-medium">
-          <DynamicNumber value={gift.remainingSupply} imageClassName="h-2.5 sm:h-3" />
-          <span className="text-[#5C5C5E] mx-0.5">/</span>
-          <DynamicNumber value={gift.totalSupply} imageClassName="h-2.5 sm:h-3" />
-          <span className="uppercase text-[7.5px] sm:text-[8.5px] tracking-wider text-[#8E8E93] ml-0.5 font-bold">Left</span>
+        <div className="flex items-center justify-center gap-[2px] sm:gap-1 text-[#8E8E93] mt-1.5 font-medium whitespace-nowrap">
+          <DynamicNumber value={gift.remainingSupply.toLocaleString('en-US')} imageClassName={gift.totalSupply >= 100000 ? "h-[6px] sm:h-[8px] text-[6px] sm:text-[8px]" : gift.totalSupply >= 10000 ? "h-[7px] sm:h-[9px] text-[7px] sm:text-[9px]" : "h-2.5 sm:h-3 text-[10px] sm:text-[12px]"} />
+          <span className="text-[#5C5C5E] text-[7px] sm:text-[9px]">/</span>
+          <DynamicNumber value={gift.totalSupply.toLocaleString('en-US')} imageClassName={gift.totalSupply >= 100000 ? "h-[6px] sm:h-[8px] text-[6px] sm:text-[8px]" : gift.totalSupply >= 10000 ? "h-[7px] sm:h-[9px] text-[7px] sm:text-[9px]" : "h-2.5 sm:h-3 text-[10px] sm:text-[12px]"} />
+          <span className="uppercase text-[6px] sm:text-[7.5px] tracking-wider text-[#8E8E93] font-bold">Left</span>
         </div>
       </div>
     </motion.button>

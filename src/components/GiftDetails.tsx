@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import WebApp from '@twa-dev/sdk';
 import { Gift, PaymentState } from '../types';
 import { DynamicNumber } from './DynamicNumber';
+import { DepositModal } from './DepositModal';
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../lib/utils';
@@ -59,6 +60,11 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
   const [isSellingMode, setIsSellingMode] = useState(false);
   const [sellPrice, setSellPrice] = useState('');
 
+  // Deposit flow state
+  const [showDeposit, setShowDeposit] = useState(false);
+  const [userBalance, setUserBalance] = useState<number | null>(null);
+  const [isCheckingBalance, setIsCheckingBalance] = useState(false);
+
   const isOwned = !!gift.orderId;
   const isListed = gift.orderStatus === 'LISTED_ON_MRKT';
   const isAdminFreeMode = adminService.getAdminFreeMode();
@@ -87,7 +93,8 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
         seller: WebApp.initDataUnsafe?.user?.first_name || WebApp.initDataUnsafe?.user?.username || 'You',
         totalSupply: gift.totalSupply,
         remainingSupply: 1,
-        isMrktListing: true
+        isMrktListing: true,
+        createdAt: new Date().toISOString()
       };
       
       await api.listOnMarket(gift.orderId, newListing);
@@ -249,7 +256,30 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
         return;
       }
 
+      setIsCheckingBalance(true);
       setPaymentState('PROCESSING');
+      
+      try {
+        const address = wallet.account.address;
+        const res = await fetch(`https://toncenter.com/api/v2/getAddressInformation?address=${address}`);
+        const data = await res.json();
+        
+        if (data.ok) {
+          const balanceGram = parseInt(data.result.balance) / 1e9;
+          setUserBalance(balanceGram);
+          const requiredGram = gift.priceGram || 0;
+          
+          if (balanceGram < requiredGram) {
+            setShowDeposit(true);
+            setPaymentState('INITIAL');
+            setIsCheckingBalance(false);
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('Balance check failed, proceeding to transaction', err);
+      }
+      setIsCheckingBalance(false);
 
       const randomBackground = gift.background || BACKGROUNDS[Math.floor(Math.random() * BACKGROUNDS.length)];
 
@@ -294,6 +324,13 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
 
   return (
     <div className="flex flex-col w-full">
+      <DepositModal 
+        isOpen={showDeposit} 
+        onClose={() => setShowDeposit(false)} 
+        walletAddress={wallet?.account?.address || ''} 
+        requiredAmount={gift.priceGram || 0} 
+        currentBalance={userBalance} 
+      />
       {/* Edge-to-Edge Image Header */}
       <div className="relative w-full h-44 sm:h-48 bg-[#1C1C1E] border-b border-[#3A3A3C]/80 overflow-hidden shrink-0 flex items-center justify-center transition-all">
         {/* Background Image */}
@@ -486,10 +523,10 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
               <div className="flex justify-between items-end mb-1">
                 <div>
                   <p className="text-[8px] uppercase tracking-widest text-[#8E8E93] font-bold mb-0.5">Supply</p>
-                  <div className="flex items-center gap-1">
-                    <DynamicNumber value={gift.remainingSupply} imageClassName="h-3" />
-                    <span className="text-[#8E8E93] text-xs font-medium">/</span>
-                    <DynamicNumber value={gift.totalSupply} imageClassName="h-3" />
+                  <div className="flex items-center gap-[2px] sm:gap-1 whitespace-nowrap">
+                    <DynamicNumber value={gift.remainingSupply.toLocaleString('en-US')} imageClassName={gift.totalSupply >= 100000 ? "h-[7px] sm:h-[9px] text-[7px]" : gift.totalSupply >= 10000 ? "h-2 sm:h-2.5 text-[10px]" : "h-3"} />
+                    <span className="text-[#8E8E93] text-[9px] sm:text-[11px] font-medium">/</span>
+                    <DynamicNumber value={gift.totalSupply.toLocaleString('en-US')} imageClassName={gift.totalSupply >= 100000 ? "h-[7px] sm:h-[9px] text-[7px]" : gift.totalSupply >= 10000 ? "h-2 sm:h-2.5 text-[10px]" : "h-3"} />
                   </div>
                 </div>
                 <div className="text-right flex flex-col items-end">
@@ -670,7 +707,7 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
           ) : (
             <button
               onClick={handleBuy}
-              disabled={isSoldOut || paymentState !== 'INITIAL'}
+              disabled={isSoldOut || paymentState !== 'INITIAL' || isCheckingBalance}
               className={cn(
                 "w-full h-10 sm:h-11 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] text-xs font-bold",
                 isSoldOut ? "bg-[#2A2A2D] text-[#8E8E93] border border-[#3A3A3C] cursor-not-allowed" :
@@ -682,13 +719,13 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
             >
               <AnimatePresence mode="wait">
                 <motion.div
-                  key={paymentState}
+                  key={paymentState + (isCheckingBalance ? '-checking' : '')}
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -5 }}
                   className="flex items-center gap-2"
                 >
-                  {paymentState === 'INITIAL' && !isSoldOut && (
+                  {paymentState === 'INITIAL' && !isCheckingBalance && !isSoldOut && (
                     <>
                       {isAdminFreeMode ? (
                         <>
@@ -718,6 +755,9 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
                       <span>{isSoldDeal ? `Sold Deal (@${(gift as any).buyer || 'buyer'})` : "Sold Out"}</span>
                     </span>
                   )}
+                  {
+                  isCheckingBalance && <><Loader2 className="animate-spin w-3.5 h-3.5"/> Checking Balance...</>
+                  }
                   {paymentState === 'CONNECTING' && <><Loader2 className="animate-spin w-3.5 h-3.5"/> Connecting Wallet...</>}
                   {paymentState === 'CONFIRMING' && <><Loader2 className="animate-spin w-3.5 h-3.5"/> Confirm in wallet</>}
                   {paymentState === 'PROCESSING' && <><Loader2 className="animate-spin w-3.5 h-3.5"/> Processing...</>}
