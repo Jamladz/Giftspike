@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import WebApp from '@twa-dev/sdk';
 import { Gift, PaymentState } from '../types';
 import { DynamicNumber } from './DynamicNumber';
-import { DepositModal } from './DepositModal';
-import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
+
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../lib/utils';
 import { CheckCircle2, AlertCircle, Loader2, Sparkles, Hash, Layers, ShieldCheck, X, Tag } from 'lucide-react';
@@ -47,11 +46,26 @@ interface GiftDetailsProps {
   onSuccess: (orderId: string, background?: string) => void;
   onListed?: () => void;
   userId?: string;
+  userStars?: number;
+  userGram?: number;
+  onUpdateStars?: (stars: number) => void;
+  onUpdateGram?: (gram: number) => void;
+  onOpenReferral?: () => void;
+  onOpenWallet?: () => void;
 }
 
-export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsProps) {
-  const [tonConnectUI] = useTonConnectUI();
-  const wallet = useTonWallet();
+export function GiftDetails({ 
+  gift, 
+  onSuccess, 
+  onListed, 
+  userId,
+  userStars = 0,
+  userGram = 0,
+  onUpdateStars,
+  onUpdateGram,
+  onOpenReferral,
+  onOpenWallet
+}: GiftDetailsProps) {
   const [paymentState, setPaymentState] = useState<PaymentState>('INITIAL');
   const [currentBgIndex, setCurrentBgIndex] = useState(0);
   const [currentModelIndex, setCurrentModelIndex] = useState(0);
@@ -61,9 +75,9 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
   const [sellPrice, setSellPrice] = useState('');
 
   // Deposit flow state
-  const [showDeposit, setShowDeposit] = useState(false);
+  
   const [userBalance, setUserBalance] = useState<number | null>(null);
-  const [isCheckingBalance, setIsCheckingBalance] = useState(false);
+  
 
   const isOwned = !!gift.orderId;
   const isListed = gift.orderStatus === 'LISTED_ON_MRKT';
@@ -233,6 +247,11 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
       }
 
       if (gift.priceStars && gift.priceStars > 0 && !isAdminFreeMode) {
+        if (userStars < gift.priceStars) {
+          if (onOpenReferral) onOpenReferral();
+          return;
+        }
+
         setPaymentState('PROCESSING');
         const randomBackground = gift.background || BACKGROUNDS[Math.floor(Math.random() * BACKGROUNDS.length)];
         const orderData = await api.createOrder(userId || 'anonymous', gift, randomBackground);
@@ -240,6 +259,10 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
         // Mocking Telegram Stars popup delay
         await new Promise(r => setTimeout(r, 1500));
         setPaymentState('VERIFYING');
+
+        // Deduct stars internally
+        if (onUpdateStars) onUpdateStars(userStars - gift.priceStars);
+
         await api.verifyOrder(orderData.orderId, 'stars_payment_' + Date.now());
         
         setPaymentState('SUCCESS');
@@ -249,66 +272,26 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
         return;
       }
 
-      if (!wallet) {
-        setPaymentState('CONNECTING');
-        await tonConnectUI.openModal();
-        setPaymentState('INITIAL');
+      // GRAM / TON Purchase using Internal Balance
+      const requiredGram = gift.priceGram || 0;
+      if (userGram < requiredGram) {
+        if (onOpenWallet) onOpenWallet();
         return;
       }
 
-      setIsCheckingBalance(true);
       setPaymentState('PROCESSING');
-      
-      try {
-        const address = wallet.account.address;
-        const res = await fetch(`https://toncenter.com/api/v2/getAddressInformation?address=${address}`);
-        const data = await res.json();
-        
-        if (data.ok) {
-          const balanceGram = parseInt(data.result.balance) / 1e9;
-          setUserBalance(balanceGram);
-          const requiredGram = gift.priceGram || 0;
-          
-          if (balanceGram < requiredGram) {
-            setShowDeposit(true);
-            setPaymentState('INITIAL');
-            setIsCheckingBalance(false);
-            return;
-          }
-        }
-      } catch (err) {
-        console.warn('Balance check failed, proceeding to transaction', err);
-      }
-      setIsCheckingBalance(false);
-
       const randomBackground = gift.background || BACKGROUNDS[Math.floor(Math.random() * BACKGROUNDS.length)];
-
+      
       // 1. Create order intent on backend
       const orderData = await api.createOrder(userId || 'anonymous', gift, randomBackground);
 
-      setPaymentState('CONFIRMING');
-
-      // 2. Prepare transaction
-      const amountNano = (orderData.amountGram * 1000000000).toString();
-      
-      const transaction = {
-        validUntil: Math.floor(Date.now() / 1000) + 360,
-        messages: [
-          {
-            address: orderData.receiverAddress,
-            amount: amountNano,
-            payload: btoa(`Order: ${orderData.orderId}`)
-          }
-        ]
-      };
-
-      // 3. Send transaction via wallet
-      const result = await tonConnectUI.sendTransaction(transaction);
-
       setPaymentState('VERIFYING');
 
-      // 4. Verify transaction on backend
-      await api.verifyOrder(orderData.orderId, result.boc);
+      // 2. Deduct GRAM internally
+      if (onUpdateGram) onUpdateGram(userGram - requiredGram);
+
+      // 3. Verify transaction on backend
+      await api.verifyOrder(orderData.orderId, 'internal_gram_' + Date.now());
 
       setPaymentState('SUCCESS');
       setTimeout(() => {
@@ -324,13 +307,6 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
 
   return (
     <div className="flex flex-col w-full">
-      <DepositModal 
-        isOpen={showDeposit} 
-        onClose={() => setShowDeposit(false)} 
-        walletAddress={wallet?.account?.address || ''} 
-        requiredAmount={gift.priceGram || 0} 
-        currentBalance={userBalance} 
-      />
       {/* Edge-to-Edge Image Header */}
       <div className="relative w-full h-44 sm:h-48 bg-[#1C1C1E] border-b border-[#3A3A3C]/80 overflow-hidden shrink-0 flex items-center justify-center transition-all">
         {/* Background Image */}
@@ -707,7 +683,7 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
           ) : (
             <button
               onClick={handleBuy}
-              disabled={isSoldOut || paymentState !== 'INITIAL' || isCheckingBalance}
+              disabled={isSoldOut || paymentState !== 'INITIAL'}
               className={cn(
                 "w-full h-10 sm:h-11 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] text-xs font-bold",
                 isSoldOut ? "bg-[#2A2A2D] text-[#8E8E93] border border-[#3A3A3C] cursor-not-allowed" :
@@ -719,13 +695,13 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
             >
               <AnimatePresence mode="wait">
                 <motion.div
-                  key={paymentState + (isCheckingBalance ? '-checking' : '')}
+                  key={paymentState}
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -5 }}
                   className="flex items-center gap-2"
                 >
-                  {paymentState === 'INITIAL' && !isCheckingBalance && !isSoldOut && (
+                  {paymentState === 'INITIAL' && !isSoldOut && (
                     <>
                       {isAdminFreeMode ? (
                         <>
@@ -756,7 +732,6 @@ export function GiftDetails({ gift, onSuccess, onListed, userId }: GiftDetailsPr
                     </span>
                   )}
                   {
-                  isCheckingBalance && <><Loader2 className="animate-spin w-3.5 h-3.5"/> Checking Balance...</>
                   }
                   {paymentState === 'CONNECTING' && <><Loader2 className="animate-spin w-3.5 h-3.5"/> Connecting Wallet...</>}
                   {paymentState === 'CONFIRMING' && <><Loader2 className="animate-spin w-3.5 h-3.5"/> Confirm in wallet</>}

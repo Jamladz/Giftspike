@@ -37,9 +37,17 @@ export default function App() {
   const userHandle = tgUser?.username || '';
   const userName = tgUser?.first_name || 'Telegram User';
 
-  const handleUpdateGram = (newBalance: number) => {
-    setUserGram(newBalance);
-    userService.updateBalance(userId, { gramBalance: newBalance });
+  const handleUpdateGram = (newBalanceOrFn: number | ((prev: number) => number)) => {
+    setUserGram(prev => {
+      const newBalance = typeof newBalanceOrFn === 'function' ? newBalanceOrFn(prev) : newBalanceOrFn;
+      userService.updateBalance(userId, { gramBalance: newBalance });
+      return newBalance;
+    });
+  };
+
+  const handleUpdateStars = (newBalance: number) => {
+    setUserStars(newBalance);
+    userService.updateBalance(userId, { starsBalance: newBalance });
   };
 
   const [selectedGift, setSelectedGift] = useState<Gift | null>(null);
@@ -235,6 +243,9 @@ export default function App() {
                   purchasedGiftIds={purchasedMarketGiftIds} 
                   storeGifts={gifts}
                   onGoToGifts={() => setActiveTab('gifts')}
+                  userId={userId}
+                  userGram={userGram}
+                  onUpdateGram={handleUpdateGram}
                 />
               )}
 
@@ -275,7 +286,13 @@ export default function App() {
                 fetchMyGifts();
                 closeSheet();
               }}
-              userId={userId} 
+              userId={userId}
+              userStars={userStars}
+              userGram={userGram}
+              onUpdateStars={handleUpdateStars}
+              onUpdateGram={handleUpdateGram}
+              onOpenReferral={() => { closeSheet(); setActiveTab('referral'); }}
+              onOpenWallet={() => { closeSheet(); setIsWalletModalOpen(true); }}
             />
           )}
           {selectedGift && successOrderId && (
