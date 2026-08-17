@@ -1,33 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import { useTonWallet, useTonConnectUI } from '@tonconnect/ui-react';
 import { DynamicNumber } from './DynamicNumber';
-import { CheckCircle2, Flame, Sparkles, Users, Send, ArrowRight, Star, Wallet } from 'lucide-react';
+import { CheckCircle2, Flame, Sparkles, Users, Send, ArrowRight, Star, Wallet, Smartphone } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { userService } from '../lib/user';
 
 interface Task {
   id: string;
   title: string;
+  description?: string;
   reward: number;
   category: 'daily' | 'social' | 'quest';
   icon?: any;
   iconUrl?: string;
   completed: boolean;
+  disabled?: boolean;
   progress?: { current: number; total: number };
   actionText: string;
 }
 
 interface TasksViewProps {
+  userId: string;
   userStars: number;
   onEarnStars: (amount: number) => void;
   onOpenWallet?: () => void;
 }
 
-export function TasksView({ userStars, onEarnStars, onOpenWallet }: TasksViewProps) {
+export function TasksView({ userId, userStars, onEarnStars, onOpenWallet }: TasksViewProps) {
   const wallet = useTonWallet();
   const [tonConnectUI] = useTonConnectUI();
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<'ALL' | 'daily' | 'social' | 'quest'>('ALL');
+  
+  const [dailyTimeLeft, setDailyTimeLeft] = useState<string | null>(null);
   
   const [tasks, setTasks] = useState<Task[]>(() => {
     const savedCompleted = JSON.parse(localStorage.getItem('tg_completed_tasks') || '[]');
@@ -38,7 +44,7 @@ export function TasksView({ userStars, onEarnStars, onOpenWallet }: TasksViewPro
         reward: 25,
         category: 'daily',
         iconUrl: 'https://i.suar.me/Npge9/l',
-        completed: savedCompleted.includes('task-1'),
+        completed: false, // Evaluated dynamically below
         actionText: 'Claim Stars',
       },
       {
@@ -69,9 +75,127 @@ export function TasksView({ userStars, onEarnStars, onOpenWallet }: TasksViewPro
         completed: savedCompleted.includes('task-4'),
         actionText: 'Connect',
       },
+      {
+        id: 'task-5',
+        title: 'Add App Shortcut',
+        description: "Add this Mini App to your phone's home screen and earn 3,000 App Stars.",
+        reward: 3000,
+        category: 'quest',
+        icon: Smartphone,
+        completed: savedCompleted.includes('task-5'),
+        actionText: '➕ Add Shortcut',
+      },
     ];
     return initialTasks;
   });
+
+  // Daily task countdown logic
+  useEffect(() => {
+    const updateDailyTask = () => {
+      const lastClaimStr = localStorage.getItem('tg_daily_checkin_ts');
+      if (lastClaimStr) {
+        const lastClaim = parseInt(lastClaimStr, 10);
+        const now = Date.now();
+        const diff = now - lastClaim;
+        const cooldown = 24 * 60 * 60 * 1000;
+        
+        if (diff < cooldown) {
+          const remaining = cooldown - diff;
+          const h = Math.floor(remaining / (1000 * 60 * 60));
+          const m = Math.floor((remaining / 1000 / 60) % 60);
+          const s = Math.floor((remaining / 1000) % 60);
+          setDailyTimeLeft(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`);
+          
+          setTasks(prev => prev.map(t => {
+            if (t.id === 'task-1') {
+              return { ...t, completed: true, actionText: `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}` };
+            }
+            return t;
+          }));
+        } else {
+          setDailyTimeLeft(null);
+          setTasks(prev => prev.map(t => {
+            if (t.id === 'task-1') {
+              return { ...t, completed: false, actionText: 'Claim Stars' };
+            }
+            return t;
+          }));
+        }
+      }
+    };
+    
+    updateDailyTask();
+    const interval = setInterval(updateDailyTask, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Shortcut integration
+  useEffect(() => {
+    const webApp = (window as any).Telegram?.WebApp;
+    if (!webApp) return;
+
+    const claimShortcutReward = async () => {
+      const saved = JSON.parse(localStorage.getItem('tg_completed_tasks') || '[]');
+      if (!saved.includes('task-5')) {
+        const result = await userService.claimTaskReward(userId, 'task-5', 3000);
+        if (result.success) {
+          saved.push('task-5');
+          localStorage.setItem('tg_completed_tasks', JSON.stringify(saved));
+          onEarnStars(3000);
+          setTasks(prev => prev.map(t => t.id === 'task-5' ? { ...t, completed: true, actionText: 'Completed', disabled: false } : t));
+          setToastMessage('✅ Shortcut Added! +3,000 App Stars');
+        } else if (result.reason === 'already_claimed') {
+          // Sync frontend state if backend says already claimed
+          saved.push('task-5');
+          localStorage.setItem('tg_completed_tasks', JSON.stringify(saved));
+          setTasks(prev => prev.map(t => t.id === 'task-5' ? { ...t, completed: true, actionText: 'Completed', disabled: false } : t));
+        }
+      }
+    };
+
+    const handleHomeScreenChecked = (event: any) => {
+      const status = event?.status || (event as any)?.detail?.status || (typeof event === 'string' ? event : 'unknown');
+      setTasks(prev => prev.map(t => {
+        if (t.id === 'task-5') {
+          if (status === 'unsupported') {
+            return { ...t, actionText: 'Unsupported', disabled: true };
+          } else if (status === 'added' && !t.completed) {
+            setTimeout(claimShortcutReward, 500);
+            return { ...t, actionText: 'Added' };
+          } else if (status === 'added' && t.completed) {
+            return { ...t, actionText: 'Added', disabled: true };
+          }
+        }
+        return t;
+      }));
+    };
+
+    const handleHomeScreenAdded = () => {
+      claimShortcutReward();
+    };
+
+    if (webApp.onEvent) {
+      webApp.onEvent('homeScreenChecked', handleHomeScreenChecked);
+      webApp.onEvent('homeScreenAdded', handleHomeScreenAdded);
+      if (webApp.checkHomeScreenStatus) {
+        try {
+          webApp.checkHomeScreenStatus();
+        } catch (e) {
+          console.warn('checkHomeScreenStatus not supported:', e);
+          handleHomeScreenChecked({ status: 'unsupported' });
+        }
+      } else {
+        handleHomeScreenChecked({ status: 'unsupported' });
+      }
+    }
+
+    return () => {
+      if (webApp.offEvent) {
+        webApp.offEvent('homeScreenChecked', handleHomeScreenChecked);
+        webApp.offEvent('homeScreenAdded', handleHomeScreenAdded);
+      }
+    };
+  }, [userId, onEarnStars]);
 
   // Dynamically update task-4 actionText based on wallet connection status
   useEffect(() => {
@@ -92,6 +216,18 @@ export function TasksView({ userStars, onEarnStars, onOpenWallet }: TasksViewPro
     const task = tasks.find((t) => t.id === taskId);
     if (!task || task.completed) return;
 
+    // Special handling for Daily Check-in task (task-1)
+    if (taskId === 'task-1') {
+      const lastClaimStr = localStorage.getItem('tg_daily_checkin_ts');
+      if (lastClaimStr) {
+        const diff = Date.now() - parseInt(lastClaimStr, 10);
+        if (diff < 24 * 60 * 60 * 1000) {
+          return; // Still on cooldown
+        }
+      }
+      localStorage.setItem('tg_daily_checkin_ts', Date.now().toString());
+    }
+
     // Special handling for Connect TON Wallet task (task-4)
     if (taskId === 'task-4') {
       if (!wallet) {
@@ -111,23 +247,53 @@ export function TasksView({ userStars, onEarnStars, onOpenWallet }: TasksViewPro
       }
     }
 
-    // Award stars
-    onEarnStars(task.reward);
-
-    // Save completed
-    const savedCompleted = JSON.parse(localStorage.getItem('tg_completed_tasks') || '[]');
-    if (!savedCompleted.includes(taskId)) {
-      savedCompleted.push(taskId);
-      localStorage.setItem('tg_completed_tasks', JSON.stringify(savedCompleted));
+    // Special handling for Add Shortcut task (task-5)
+    if (taskId === 'task-5') {
+      if (task.disabled) return;
+      const webApp = (window as any).Telegram?.WebApp;
+      if (!webApp || !webApp.addToHomeScreen) {
+        setToastMessage('⚠️ Home Screen Shortcut is not supported on this device.');
+        return;
+      }
+      try {
+        webApp.addToHomeScreen();
+      } catch (e) {
+        setToastMessage('⚠️ Home Screen Shortcut is not supported on this device.');
+      }
+      return; // The event listener handles the actual reward
     }
 
-    // Update state
-    setTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, completed: true, actionText: 'Completed' } : t))
-    );
+    // Backend verification for reward
+    const result = await userService.claimTaskReward(userId, taskId, task.reward);
+    
+    if (result.success) {
+      // Award stars
+      onEarnStars(task.reward);
 
-    // Toast notification
-    setToastMessage(`+${task.reward} Stars Earned!`);
+      // Save completed
+      const savedCompleted = JSON.parse(localStorage.getItem('tg_completed_tasks') || '[]');
+      if (!savedCompleted.includes(taskId)) {
+        savedCompleted.push(taskId);
+        localStorage.setItem('tg_completed_tasks', JSON.stringify(savedCompleted));
+      }
+
+      // Update state
+      setTasks((prev) =>
+        prev.map((t) => (t.id === taskId ? { ...t, completed: true, actionText: 'Completed' } : t))
+      );
+
+      // Toast notification
+      setToastMessage(`+${task.reward} Stars Earned!`);
+    } else if (result.reason === 'already_claimed') {
+      const savedCompleted = JSON.parse(localStorage.getItem('tg_completed_tasks') || '[]');
+      if (!savedCompleted.includes(taskId)) {
+        savedCompleted.push(taskId);
+        localStorage.setItem('tg_completed_tasks', JSON.stringify(savedCompleted));
+      }
+      setTasks((prev) =>
+        prev.map((t) => (t.id === taskId ? { ...t, completed: true, actionText: 'Completed' } : t))
+      );
+    }
     setTimeout(() => {
       setToastMessage(null);
     }, 3000);
@@ -268,24 +434,33 @@ export function TasksView({ userStars, onEarnStars, onOpenWallet }: TasksViewPro
                       </span>
                     )}
                   </div>
+                  {task.description && (
+                    <p className="text-[10px] text-[#8E8E93] mt-1.5 leading-tight pr-2 whitespace-normal">{task.description}</p>
+                  )}
                 </div>
               </div>
 
               <button
                 onClick={() => handleTaskAction(task.id)}
-                disabled={task.completed}
+                disabled={task.completed || task.disabled}
                 className={cn(
                   'px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-1.5',
                   task.completed
                     ? 'bg-[#222225] text-green-400 border border-green-500/30 cursor-default'
-                    : 'bg-[#0088CC] hover:bg-[#0077B5] text-white font-black shadow-md active:scale-95'
+                    : task.disabled
+                      ? 'bg-[#222225] text-[#8E8E93] cursor-not-allowed border border-[#3A3A3C]'
+                      : 'bg-[#0088CC] hover:bg-[#0077B5] text-white font-black shadow-md active:scale-95'
                 )}
               >
                 {task.completed ? (
-                  <>
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Done</span>
-                  </>
+                  task.id === 'task-1' && dailyTimeLeft ? (
+                    <span className="font-mono text-[11px]">{dailyTimeLeft}</span>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Done</span>
+                    </>
+                  )
                 ) : (
                   <>
                     <span>{task.actionText}</span>

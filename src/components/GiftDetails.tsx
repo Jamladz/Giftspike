@@ -49,7 +49,7 @@ interface GiftDetailsProps {
   userStars?: number;
   userGram?: number;
   onUpdateStars?: (stars: number) => void;
-  onUpdateGram?: (gram: number) => void;
+  onUpdateGram?: (gram: number | ((prev: number) => number)) => void;
   onOpenReferral?: () => void;
   onOpenWallet?: () => void;
 }
@@ -116,6 +116,7 @@ export function GiftDetails({
       // Update local storage so MarketView sees it immediately
       const currentListings = JSON.parse(localStorage.getItem('market_active_listings') || '[]');
       localStorage.setItem('market_active_listings', JSON.stringify([newListing, ...currentListings]));
+      window.dispatchEvent(new CustomEvent('market_listing_added', { detail: newListing }));
 
       setPaymentState('SUCCESS');
       setTimeout(() => {
@@ -139,6 +140,7 @@ export function GiftDetails({
         await api.cancelSale(gift.orderId, listing.id);
         const updatedListings = currentListings.filter((l: any) => l.id !== listing.id);
         localStorage.setItem('market_active_listings', JSON.stringify(updatedListings));
+        window.dispatchEvent(new CustomEvent('market_listing_removed', { detail: listing.id }));
       } else {
         // Fallback if not found locally
         await api.cancelSale(gift.orderId, 'unknown_id');
@@ -288,7 +290,7 @@ export function GiftDetails({
       setPaymentState('VERIFYING');
 
       // 2. Deduct GRAM internally
-      if (onUpdateGram) onUpdateGram(userGram - requiredGram);
+      if (onUpdateGram) onUpdateGram((prev: number) => prev - requiredGram);
 
       // 3. Verify transaction on backend
       await api.verifyOrder(orderData.orderId, 'internal_gram_' + Date.now());

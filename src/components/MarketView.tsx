@@ -31,7 +31,7 @@ interface MarketViewProps {
   onGoToGifts?: () => void;
   userId?: string;
   userGram?: number;
-  onUpdateGram?: (gram: number) => void;
+  onUpdateGram?: (gram: number | ((prev: number) => number)) => void;
 }
 
 // Authentic Telegram Username Pools (Arab, Western, Russian in English)
@@ -100,10 +100,10 @@ const POPULAR_HASHTAGS = [1, 7, 42, 88, 142, 258, 404, 777, 888];
 
 // Realistically Timed Sold History Generator
 const REALISTIC_SOLD_TIMES = [
-  'Just now', '1m ago', '2m ago', '3m ago', '4m ago', '6m ago', '9m ago', '12m ago', '15m ago',
-  '18m ago', '22m ago', '28m ago', '35m ago', '42m ago', '50m ago', '1h ago', '1h 5m ago', '1h 15m ago',
-  '1h 30m ago', '1h 45m ago', '2h ago', '2h 15m ago', '2h 45m ago', '3h ago', '3h 30m ago', '4h ago',
-  '5h ago', '6h ago', '8h ago', '10h ago', '12h ago', '15h ago', '18h ago', '1d ago', '1d 6h ago', '2d ago'
+  'Just now', '1m ago', '2m ago', '3m ago', '5m ago', '8m ago', '12m ago', '15m ago',
+  '20m ago', '30m ago', '45m ago', '1h ago', '1h 30m ago', '2h ago', '3h ago', '5h ago', 
+  '8h ago', '12h ago', '18h ago', '1d ago', '1d 6h ago', '2d ago', '2d 12h ago', '3d ago',
+  '4d ago', '5d ago', '6d ago', '1w ago', '1w 2d ago', '1w 5d ago', '2w ago', '3w ago', '1mo ago'
 ];
 
 // Helper to calculate pricing based on attributes & rarity
@@ -195,16 +195,16 @@ function generateSoldListings(count = 180, availableGiftNames: string[] = ALL_GI
 
     // Pick realistic time based on index distribution
     let soldAt: string;
-    if (i <= 4) {
-      soldAt = REALISTIC_SOLD_TIMES[i - 1]; // Just now, 1m, 2m, 3m
-    } else if (i <= 20) {
-      soldAt = REALISTIC_SOLD_TIMES[4 + Math.floor((i - 4) % 6)]; // 4m to 18m
-    } else if (i <= 50) {
-      soldAt = REALISTIC_SOLD_TIMES[10 + Math.floor((i - 20) % 8)]; // 22m to 1h 15m
-    } else if (i <= 100) {
-      soldAt = REALISTIC_SOLD_TIMES[18 + Math.floor((i - 50) % 10)]; // 1h 30m to 5h
+    if (i <= 2) {
+      soldAt = REALISTIC_SOLD_TIMES[i]; // Just now, 1m, 2m
+    } else if (i <= 10) {
+      soldAt = REALISTIC_SOLD_TIMES[3 + Math.floor((i - 3) % 8)]; // 3m to 45m
+    } else if (i <= 30) {
+      soldAt = REALISTIC_SOLD_TIMES[11 + Math.floor((i - 10) % 8)]; // 1h to 18h
+    } else if (i <= 80) {
+      soldAt = REALISTIC_SOLD_TIMES[19 + Math.floor((i - 30) % 8)]; // 1d to 1w
     } else {
-      soldAt = REALISTIC_SOLD_TIMES[28 + Math.floor((i - 100) % 8)]; // 6h to 2d
+      soldAt = REALISTIC_SOLD_TIMES[27 + Math.floor((i - 80) % 6)]; // 1w to 1mo
     }
 
     items.push({
@@ -249,6 +249,27 @@ export function MarketView({ onSelectGift, purchasedGiftIds, storeGifts, onGoToG
   const [displayLimit, setDisplayLimit] = useState(28);
 
   // Active Market Listings State (includes all gifts: Tele GT, Cash Cannon, Champion Bear)
+  useEffect(() => {
+    const handleNewListing = (e: any) => {
+       const newListing = e.detail;
+       if (newListing) {
+         setActiveMarketListings(prev => [newListing, ...prev]);
+       }
+    };
+    const handleRemoveListing = (e: any) => {
+       const id = e.detail;
+       if (id) {
+         setActiveMarketListings(prev => prev.filter(l => l.id !== id));
+       }
+    };
+    window.addEventListener('market_listing_added', handleNewListing);
+    window.addEventListener('market_listing_removed', handleRemoveListing);
+    return () => {
+      window.removeEventListener('market_listing_added', handleNewListing);
+      window.removeEventListener('market_listing_removed', handleRemoveListing);
+    };
+  }, []);
+
   const [activeMarketListings, setActiveMarketListings] = useState(() => {
     const saved = localStorage.getItem('market_active_listings');
     let parsed = saved ? JSON.parse(saved) : null;
@@ -403,7 +424,7 @@ export function MarketView({ onSelectGift, purchasedGiftIds, storeGifts, onGoToG
       
       // If away for more than 30 seconds
       if (diffSecs > 30) {
-        let missedTrades = Math.floor(diffSecs / 6); // roughly 1 trade every 6s average
+        let missedTrades = Math.floor(diffSecs / 25); // roughly 1 trade every 6s average
         if (missedTrades > 200) missedTrades = 200; // Cap to 200 max to avoid lag
         
         if (missedTrades > 0) {
@@ -424,18 +445,23 @@ export function MarketView({ onSelectGift, purchasedGiftIds, storeGifts, onGoToG
                
                const hasFlippableItems = flippable.length > 0;
                const rand = Math.random();
-               const simulatedTimestamp = now - (missedTrades - i) * 6000;
+               const simulatedTimestamp = now - (missedTrades - i) * 25000;
 
                if (rand < 0.55 && activeCount > 5) {
                   const randomIndex = Math.floor(Math.random() * activeCount);
                   const itemToBuy = currentActive[randomIndex];
-                  if (!ALL_TELEGRAM_BOTS.includes(itemToBuy.seller)) continue; // Bots don't buy from real users in offline catch-up
+                  if (!ALL_TELEGRAM_BOTS.includes(itemToBuy.seller)) continue; // Bots don't buy from real users
                   
                   let buyer = ALL_TELEGRAM_BOTS[Math.floor(Math.random() * ALL_TELEGRAM_BOTS.length)];
                   while (buyer === itemToBuy.seller) {
                     buyer = ALL_TELEGRAM_BOTS[Math.floor(Math.random() * ALL_TELEGRAM_BOTS.length)];
                   }
                   
+                  const isRealUser = !ALL_TELEGRAM_BOTS.includes(itemToBuy.seller);
+                  if (isRealUser && onUpdateGram) {
+                    onUpdateGram((prev: number) => prev + itemToBuy.priceGram);
+                  }
+
                   const soldItem = {
                     ...itemToBuy,
                     id: `sold-sim-${simulatedTimestamp}-${Math.random().toString(36).substr(2, 4)}`,
@@ -662,18 +688,18 @@ export function MarketView({ onSelectGift, purchasedGiftIds, storeGifts, onGoToG
       }
 
       // Carefully studied dynamic pacing 
-      // Mood determines the gap until the NEXT trade
+      // Mood determines the gap until the NEXT trade (Slowed down for realism)
       let nextDelay;
       const mood = Math.random();
-      if (mood < 0.25) {
-        // FOMO Burst Mode: 500ms to 2.5s
-        nextDelay = Math.floor(Math.random() * 2000) + 500;
-      } else if (mood < 0.8) {
-        // Normal Activity: 3s to 7s
-        nextDelay = Math.floor(Math.random() * 4000) + 3000;
+      if (mood < 0.15) {
+        // FOMO Burst Mode: 2s to 4s
+        nextDelay = Math.floor(Math.random() * 2000) + 2000;
+      } else if (mood < 0.6) {
+        // Normal Activity: 10s to 18s
+        nextDelay = Math.floor(Math.random() * 8000) + 10000;
       } else {
-        // Slow Market Lull: 8s to 15s
-        nextDelay = Math.floor(Math.random() * 7000) + 8000;
+        // Slow Market Lull: 20s to 45s
+        nextDelay = Math.floor(Math.random() * 25000) + 20000;
       }
       
       timeoutId = setTimeout(runEngine, nextDelay);

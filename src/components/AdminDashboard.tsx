@@ -45,8 +45,43 @@ export function AdminDashboard({ onClose, onGrantFreeGift, userGram, onUpdateGra
     setIsAdminFreeMode(adminService.getAdminFreeMode());
   }, []);
 
-  const loadData = () => {
-    setUsers(adminService.getUsers());
+  const loadData = async () => {
+    // We now fetch real users from the backend
+    try {
+      const { collection, getDocs, orderBy, query } = await import('firebase/firestore');
+      const { db } = await import('../lib/firebase');
+      
+      const q = query(collection(db, 'users'), orderBy('createdAt', 'desc'));
+      const snap = await getDocs(q);
+      const realUsers = snap.docs.map(doc => {
+         const data = doc.data();
+         return {
+           id: data.uid,
+           username: data.tgUsername || data.displayName || 'Unknown',
+           first_name: data.tgFirstName || data.displayName || 'Unknown',
+           last_seen: data.lastLoginAt || data.createdAt || new Date().toISOString(),
+           userGram: data.gramBalance || 0,
+           userStars: data.starsBalance || 0,
+           giftsCount: 0 // Cannot easily compute here without separate queries, but fine for now
+         };
+      });
+      
+      // If we don't have many real users yet, append mock users for testing visual
+      const localUsers = adminService.getUsers();
+      
+      const mergedUsers = [...realUsers];
+      for (const lu of localUsers) {
+        if (!mergedUsers.find(u => u.id === lu.id)) {
+           mergedUsers.push(lu);
+        }
+      }
+      
+      setUsers(mergedUsers);
+    } catch (e) {
+      console.error('Failed to fetch real users', e);
+      setUsers(adminService.getUsers());
+    }
+    
     setWithdrawals(adminService.getWithdrawals());
   };
 

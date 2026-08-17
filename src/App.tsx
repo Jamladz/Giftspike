@@ -11,6 +11,7 @@ import { TasksView } from './components/TasksView';
 import { MarketView } from './components/MarketView';
 import { ProfileView } from './components/ProfileView';
 import { AdminDashboard } from './components/AdminDashboard';
+import { WelcomeBonusModal } from './components/WelcomeBonusModal';
 import { Gift } from './types';
 import { Loader2 } from 'lucide-react';
 import { ReferralBanner } from './components/ReferralBanner';
@@ -28,6 +29,7 @@ export default function App() {
   const [myGifts, setMyGifts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [synced, setSynced] = useState(false);
+  const [showWelcomeBonus, setShowWelcomeBonus] = useState(false);
   
   const [userStars, setUserStars] = useState<number>(150);
   const [userGram, setUserGram] = useState<number>(0);
@@ -94,10 +96,13 @@ export default function App() {
     
     // Process referral on launch
     referralService.processReferralOnLaunch(userId, userName).then(refResult => {
-      userService.syncUser(userId, userName).then((balances) => {
+      userService.syncUser(userId, tgUser || userName).then((balances) => {
         if (balances) {
           setUserGram(balances.gramBalance);
           setUserStars(balances.starsBalance + (refResult.success ? refResult.welcomeBonus : 0));
+          if ((balances as any).isNewUser) {
+             setShowWelcomeBonus(true);
+          }
           setSynced(true);
         }
       });
@@ -223,6 +228,7 @@ export default function App() {
 
               {activeTab === 'tasks' && (
                 <TasksView 
+                  userId={userId}
                   userStars={userStars} 
                   onEarnStars={handleEarnStars} 
                   onOpenWallet={() => setIsWalletModalOpen(true)} 
@@ -304,6 +310,8 @@ export default function App() {
             />
           )}
         </BottomSheet>
+
+        <WelcomeBonusModal isOpen={showWelcomeBonus} onClose={() => setShowWelcomeBonus(false)} />
 
         {/* Deposit & Withdraw Wallet Modal (75% height sheet with TON Connect) */}
         <WalletModal
