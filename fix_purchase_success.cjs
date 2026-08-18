@@ -1,4 +1,6 @@
-import React from 'react';
+const fs = require('fs');
+
+const code = `import React from 'react';
 import { Gift } from '../types';
 import { DynamicNumber } from './DynamicNumber';
 import { CheckCircle2, X, Sparkles, Diamond, ShieldCheck } from 'lucide-react';
@@ -130,3 +132,6 @@ export function PurchaseSuccess({ gift, orderId, orderData, onClose }: PurchaseS
     </div>
   );
 }
+`;
+
+fs.writeFileSync('src/components/PurchaseSuccess.tsx', code);

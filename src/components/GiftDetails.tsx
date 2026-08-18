@@ -43,7 +43,7 @@ interface GiftDetailsProps {
     seller?: string;
     orderStatus?: string;
   };
-  onSuccess: (orderId: string, background?: string) => void;
+  onSuccess: (orderId: string, orderData?: any) => void;
   onListed?: () => void;
   userId?: string;
   userStars?: number;
@@ -236,14 +236,14 @@ export function GiftDetails({
       // Free Admin Purchase path
       if (isAdminFreeMode) {
         setPaymentState('PROCESSING');
-        const randomBackground = gift.background || BACKGROUNDS[Math.floor(Math.random() * BACKGROUNDS.length)];
-        const orderData = await api.createOrder(userId || 'anonymous', gift, randomBackground);
+        
+        const orderData = await api.createOrder(userId || 'anonymous', gift);
         
         // Auto verify for free admin testing
         await api.verifyOrder(orderData.orderId, 'admin_free_test_boc');
         setPaymentState('SUCCESS');
         setTimeout(() => {
-          onSuccess(orderData.orderId, randomBackground);
+          onSuccess(orderData.orderId, orderData);
         }, 1200);
         return;
       }
@@ -255,8 +255,8 @@ export function GiftDetails({
         }
 
         setPaymentState('PROCESSING');
-        const randomBackground = gift.background || BACKGROUNDS[Math.floor(Math.random() * BACKGROUNDS.length)];
-        const orderData = await api.createOrder(userId || 'anonymous', gift, randomBackground);
+        
+        const orderData = await api.createOrder(userId || 'anonymous', gift);
         
         // Mocking Telegram Stars popup delay
         await new Promise(r => setTimeout(r, 1500));
@@ -269,7 +269,7 @@ export function GiftDetails({
         
         setPaymentState('SUCCESS');
         setTimeout(() => {
-          onSuccess(orderData.orderId, randomBackground);
+          onSuccess(orderData.orderId, orderData);
         }, 1200);
         return;
       }
@@ -282,10 +282,10 @@ export function GiftDetails({
       }
 
       setPaymentState('PROCESSING');
-      const randomBackground = gift.background || BACKGROUNDS[Math.floor(Math.random() * BACKGROUNDS.length)];
+      
       
       // 1. Create order intent on backend
-      const orderData = await api.createOrder(userId || 'anonymous', gift, randomBackground);
+      const orderData = await api.createOrder(userId || 'anonymous', gift);
 
       setPaymentState('VERIFYING');
 
@@ -297,7 +297,7 @@ export function GiftDetails({
 
       setPaymentState('SUCCESS');
       setTimeout(() => {
-        onSuccess(orderData.orderId, randomBackground);
+        onSuccess(orderData.orderId, orderData);
       }, 1500);
 
     } catch (error) {

@@ -57,7 +57,7 @@ export default function App() {
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [isAdminDashboardOpen, setIsAdminDashboardOpen] = useState(false);
   const [successOrderId, setSuccessOrderId] = useState<string | null>(null);
-  const [successBackground, setSuccessBackground] = useState<string | null>(null);
+  const [successOrderData, setSuccessOrderData] = useState<any>(null);
 
   const handleEarnStars = (amount: number) => {
     setUserStars((prev) => {
@@ -148,12 +148,12 @@ export default function App() {
     setIsSheetOpen(true);
   };
 
-  const handlePurchaseSuccess = (orderId: string, background?: string) => {
+  const handlePurchaseSuccess = (orderId: string, orderData?: any) => {
     if (selectedGift && selectedGift.isMrktListing) {
       setPurchasedMarketGiftIds(prev => [...prev, selectedGift.id]);
     }
     setSuccessOrderId(orderId);
-    setSuccessBackground(background || null);
+    setSuccessOrderData(orderData || null);
     fetchGifts(); // Refresh supply
     fetchMyGifts(); // Refresh my gifts
   };
@@ -163,7 +163,7 @@ export default function App() {
     setTimeout(() => {
       setSelectedGift(null);
       setSuccessOrderId(null);
-      setSuccessBackground(null);
+      setSuccessOrderData(null);
     }, 300); // Wait for animation
   };
 
@@ -305,7 +305,7 @@ export default function App() {
             <PurchaseSuccess 
               gift={selectedGift} 
               orderId={successOrderId} 
-              background={successBackground}
+              orderData={successOrderData}
               onClose={closeSheet} 
             />
           )}
